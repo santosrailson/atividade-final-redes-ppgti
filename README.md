@@ -34,43 +34,59 @@ Desenvolver um mecanismo de *Closed Loop* que:
 | **Tráfego eMBB** | Ferramentas como **iperf** ou **ffmpeg** para simular alta demanda de banda (ex: streaming de vídeo, transferência de arquivos) |
 | **Controle** | Scripts que ajustam dinamicamente filas e prioridades nos roteadores em resposta à latência medida |
 
-### Artefatos de Entrega
-
-1. **Relatório final** em formato de artigo científico ([template SBC](https://pt.overleaf.com/latex/templates/sbc-conferences-template/blbxwjwzdngr)), contendo:
-   - Introdução
-   - Metodologia
-   - Proposta
-   - Avaliação
-   - Conclusões
-
-2. **Repositório no GitHub** com:
-   - Scripts Python para envio e medição do tráfego uRLLC (Scapy)
-   - Arquivos de configuração do Mininet
-   - Scripts para geração de tráfego eMBB
-   - Scripts de controle para ajuste de prioridade em tempo real
-   - Instruções claras para execução e reprodução dos experimentos
-
 ---
 
-## 📁 Estrutura do Repositório (em desenvolvimento)
+## 📁 Estrutura do Repositório
 
 ```
 .
 ├── README.md                          # Este arquivo
-├── docs/                              # Relatório e documentação
+├── doc_project.md                     # Documentação detalhada do projeto
 ├── mininet/                           # Topologia e configuração da rede
+│   └── topologia.py                   # Topologia Mininet com 4 switches P4 e 4 hosts
+├── p4/                                # Código e regras dos switches P4
+│   ├── comutador.p4                   # Plano de dados P4
+│   └── tabelas/                       # Regras de encaminhamento/classificação
+│       ├── c1.txt
+│       ├── c2.txt
+│       ├── c3.txt
+│       └── c4.txt
 ├── traffic/                           # Geração de tráfego
-│   ├── urllc/                         # Scripts Scapy para uRLLC
-│   └── embb/                          # Scripts iperf/ffmpeg para eMBB
-├── control/                           # Scripts de controle e monitoramento
-└── results/                           # Logs e resultados dos experimentos
+│   ├── urllc/                         # Scripts Scapy para uRLLC (em desenvolvimento)
+│   └── embb/                          # Scripts iperf/ffmpeg para eMBB (em desenvolvimento)
+├── control/                           # Scripts de controle e monitoramento (em desenvolvimento)
+├── util/                              # Scripts auxiliares
+│   └── executar_topologia.sh          # Inicializa a topologia Mininet
+├── results/                           # Logs e resultados dos experimentos
+└── docs/                              # Relatório e documentação
 ```
 
 ---
 
-## 🚀 Como executar (em breve)
+## 🚀 Como executar
 
-> As instruções detalhadas de instalação, configuração e execução serão adicionadas conforme o projeto for implementado.
+### Requisitos
+
+- Mininet
+- `p4c` (compilador P4)
+- `simple_switch` e `simple_switch_CLI`
+- Python 3, Scapy e o módulo `p4_mininet`
+
+> No ambiente Debian 13 utilizado, o Mininet foi instalado via `apt`, e o `p4c`/`behavioral-model` foram compilados do código-fonte. Os scripts auxiliares de instalação estão em `util/instalar_p4*.sh`.
+
+### Subir a topologia
+
+```bash
+sudo ./util/executar_topologia.sh
+```
+
+Ou diretamente com Python:
+
+```bash
+sudo python3 mininet/topologia.py --cli
+```
+
+Para mais detalhes sobre a topologia, o código P4 e as regras de encaminhamento, consulte o arquivo `doc_project.md`.
 
 ---
 
@@ -78,8 +94,8 @@ Desenvolver um mecanismo de *Closed Loop* que:
 
 | Etapa | Status | Descrição |
 |-------|--------|-----------|
-| Planejamento | 🔄 Em andamento | Definição da topologia e arquitetura do sistema |
-| Implementação | ⏳ Pendente | Desenvolvimento dos scripts e configurações |
+| Planejamento | ✅ Concluído | Definição da topologia e arquitetura do sistema |
+| Implementação | 🔄 Em andamento | Desenvolvimento dos scripts e configurações |
 | Testes e Validação | ⏳ Pendente | Execução de experimentos e coleta de resultados |
 | Relatório | ⏳ Pendente | Escrita do artigo final |
 | Entrega | ⏳ Pendente | Publicação no GitHub e envio do relatório |
@@ -92,4 +108,4 @@ Desenvolver um mecanismo de *Closed Loop* que:
 
 ---
 
-> **Nota:** Este projeto está em desenvolvimento. O README será atualizado conforme novas seções e instruções forem concluídas.
+> **Nota:** Este projeto está em desenvolvimento. O `README.md` e o `doc_project.md` serão atualizados conforme novas seções forem concluídas.

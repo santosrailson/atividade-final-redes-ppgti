@@ -1,0 +1,12 @@
+table_set_default tabela_encaminhamento_ipv4 descartar
+table_set_default tabela_classificacao NoAction
+
+table_add tabela_classificacao classificar_urllc 10.0.1.10/32 5000 =>
+table_add tabela_classificacao classificar_urllc 10.0.4.10/32 5000 =>
+table_add tabela_classificacao classificar_embb 10.0.2.10/32 5001 =>
+table_add tabela_classificacao classificar_embb 10.0.3.10/32 5001 =>
+
+table_add tabela_encaminhamento_ipv4 encaminhar 10.0.1.10/32 => 1 00:00:00:00:23:02
+table_add tabela_encaminhamento_ipv4 encaminhar 10.0.2.10/32 => 1 00:00:00:00:23:02
+table_add tabela_encaminhamento_ipv4 encaminhar 10.0.3.10/32 => 3 00:00:00:00:03:10
+table_add tabela_encaminhamento_ipv4 encaminhar 10.0.4.10/32 => 2 00:00:00:00:34:01
