@@ -16,6 +16,8 @@ env/
 .p4libs/
 results/*
 !results/.gitkeep
+docs/resultados/*
+!docs/resultados/.gitkeep
 build/
 dist/
 *.egg-info/

@@ -11,7 +11,15 @@ from scapy.all import IP, TCP, Raw, StreamSocket
 LIMIAR_LATENCIA_MS = 5.0
 JANELA_VIOLACOES = 2
 AMOSTRAS_PARA_NORMALIZAR = 3
-ARQUIVO_SINAL = "/tmp/sinal_controle_qos"
+
+DIRETORIO_PROJETO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DIRETORIO_RESULTADOS = os.path.join(DIRETORIO_PROJETO, "docs", "resultados")
+if not os.path.exists(DIRETORIO_RESULTADOS):
+    os.makedirs(DIRETORIO_RESULTADOS)
+
+ARQUIVO_SINAL = os.path.join(DIRETORIO_RESULTADOS, "sinal_controle_qos")
+ARQUIVO_LATENCIAS = os.path.join(DIRETORIO_RESULTADOS, "latencias_receptor.csv")
+ARQUIVO_ERRO = os.path.join(DIRETORIO_RESULTADOS, "monitor_erro.log")
 
 
 def enviar_sinal(acao):
@@ -105,12 +113,12 @@ def iniciar_servidor(endereco="0.0.0.0", porta=5000, duracao_segundos=60):
 
     servidor.close()
 
-    with open("/tmp/latencias_receptor.csv", "w") as arquivo:
+    with open(ARQUIVO_LATENCIAS, "w") as arquivo:
         arquivo.write("latencia_ms\n")
         for valor in latencias:
             arquivo.write("%.3f\n" % valor)
 
-    print("Monitor (Scapy) finalizado. %d medicoes salvas em /tmp/latencias_receptor.csv" % len(latencias))
+    print("Monitor (Scapy) finalizado. %d medicoes salvas em %s" % (len(latencias), ARQUIVO_LATENCIAS))
 
 
 if __name__ == "__main__":
@@ -120,7 +128,7 @@ if __name__ == "__main__":
         duracao = float(sys.argv[3]) if len(sys.argv) > 3 else 60.0
         iniciar_servidor(endereco, porta, duracao)
     except Exception as erro:
-        with open("/tmp/monitor_erro.log", "w") as arquivo:
+        with open(ARQUIVO_ERRO, "w") as arquivo:
             arquivo.write(str(erro) + "\n")
             import traceback
             arquivo.write(traceback.format_exc())

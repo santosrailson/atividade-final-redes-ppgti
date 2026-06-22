@@ -1,11 +1,19 @@
 #!/usr/bin/env python3
 
+import os
 import socket
 import struct
 import time
 import sys
 
 from scapy.all import IP, TCP, Raw, StreamSocket
+
+DIRETORIO_PROJETO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DIRETORIO_RESULTADOS = os.path.join(DIRETORIO_PROJETO, "docs", "resultados")
+if not os.path.exists(DIRETORIO_RESULTADOS):
+    os.makedirs(DIRETORIO_RESULTADOS)
+
+ARQUIVO_LATENCIAS = os.path.join(DIRETORIO_RESULTADOS, "latencias_urllc.csv")
 
 
 def criar_conexao_scapy(endereco_destino, porta_destino):
@@ -76,12 +84,12 @@ def executar_gerador(endereco_destino, porta_destino, intervalo_segundos, duraca
         except Exception:
             pass
 
-    with open("/tmp/latencias_urllc.csv", "w") as arquivo:
+    with open(ARQUIVO_LATENCIAS, "w") as arquivo:
         arquivo.write("latencia_ms\n")
         for valor in latencias:
             arquivo.write("%.3f\n" % valor)
 
-    print("Gerador uRLLC (Scapy) finalizado. %d medicoes salvas em /tmp/latencias_urllc.csv" % len(latencias))
+    print("Gerador uRLLC (Scapy) finalizado. %d medicoes salvas em %s" % (len(latencias), ARQUIVO_LATENCIAS))
 
 
 if __name__ == "__main__":

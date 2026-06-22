@@ -18,9 +18,13 @@ sys.path.insert(0, DIRETORIO_PROJETO)
 
 from etapa3_solucao.topologia_ovs_puro_scapy import criar_topologia
 
-ARQUIVO_SINAL = "/tmp/sinal_controle_qos"
-ARQUIVO_EVENTOS = "/tmp/eventos_controle.txt"
-ARQUIVO_LATENCIAS = "/tmp/latencias_urllc.csv"
+DIRETORIO_RESULTADOS = os.path.join(DIRETORIO_PROJETO, "docs", "resultados")
+if not os.path.exists(DIRETORIO_RESULTADOS):
+    os.makedirs(DIRETORIO_RESULTADOS)
+
+ARQUIVO_SINAL = os.path.join(DIRETORIO_RESULTADOS, "sinal_controle_qos")
+ARQUIVO_EVENTOS = os.path.join(DIRETORIO_RESULTADOS, "eventos_controle.txt")
+ARQUIVO_LATENCIAS = os.path.join(DIRETORIO_RESULTADOS, "latencias_urllc.csv")
 
 CAMINHO_PYTHON = "/root/atividade-final-redes-ppgti/.venv/bin/python3"
 
@@ -137,11 +141,11 @@ def executar_experimento(duracao_segundos, taxa_embb, tipo_embb, controle, sem_e
         partes_sufixo.append("embb_%s_%s" % (taxa_embb, tipo_embb))
         if controle != "nenhum":
             partes_sufixo.append(controle)
-    caminho_grafico = "/tmp/grafico_latencias_%s.png" % "_".join(partes_sufixo)
+    caminho_grafico = os.path.join(DIRETORIO_RESULTADOS, "grafico_latencias_%s.png" % "_".join(partes_sufixo))
 
     print("*** Coletando resultados (%s)" % caminho_grafico)
-    os.system("%s /root/atividade-final-redes-ppgti/etapa3_solucao/coletar_resultados.py %s %s /tmp/eventos_controle.txt"
-              % (CAMINHO_PYTHON, ARQUIVO_LATENCIAS, caminho_grafico))
+    os.system("%s /root/atividade-final-redes-ppgti/etapa3_solucao/coletar_resultados.py %s %s %s"
+              % (CAMINHO_PYTHON, ARQUIVO_LATENCIAS, caminho_grafico, ARQUIVO_EVENTOS))
 
     print("*** Experimento finalizado")
     rede.stop()

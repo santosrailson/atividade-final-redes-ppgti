@@ -27,7 +27,8 @@ Desenvolver um sistema de monitoramento e controle em malha fechada para garanti
 │   ├── 08_analise_gargalo_versao_original.md
 │   ├── 09_melhorias_versao_original.md
 │   ├── 10_gerador_scapy_tcp.md
-│   └── 12_arquitetura_ovs_puro_scapy.md
+│   ├── 12_arquitetura_ovs_puro_scapy.md
+│   └── resultados/                 # CSVs, eventos e graficos gerados pelos experimentos
 ├── etapa1_ambiente/                # Etapa 1: Mininet + Python
 │   ├── instalar_dependencias.sh
 │   ├── topologia_simples.py
@@ -103,7 +104,7 @@ Percentis representativos (eMBB 5M UDP preventivo, 60 s):
 | p95 | 4,53 ms |
 | p99 | 11,01 ms |
 
-Os gráficos são salvos em `/tmp/grafico_latencias_*.png`.
+Os gráficos, CSVs de latência e arquivo de eventos são salvos em `docs/resultados/`.
 
 Veja detalhes em `docs/12_arquitetura_ovs_puro_scapy.md`.
 

@@ -113,7 +113,7 @@ Roda no host `h_urllc_b` e atua como servidor TCP na porta 5000.
 - Calcula a latência unidirecional (one-way): `tempo_recebimento - tempo_envio`.
 - Responde com o mesmo timestamp.
 - Avalia a latência em relação ao limiar de 5 ms.
-- Envia sinais de controle para o atuador via arquivo `/tmp/sinal_controle_qos`.
+- Envia sinais de controle para o atuador via arquivo `docs/resultados/sinal_controle_qos`.
 
 ### Lógica de controle
 
@@ -167,13 +167,13 @@ ovs-ofctl add-flow r1 'priority=200,udp,tp_dst=5001,actions=drop'
 ovs-ofctl del-flows r1 'udp,tp_dst=5001'
 ```
 
-A função `monitorar_sinal_e_atuar` verifica o arquivo `/tmp/sinal_controle_qos` periodicamente e aplica a ação correspondente em todos os switches.
+A função `monitorar_sinal_e_atuar` verifica o arquivo `docs/resultados/sinal_controle_qos` periodicamente e aplica a ação correspondente em todos os switches.
 
 ---
 
 ## Arquivo: `etapa3_solucao/coletar_resultados.py`
 
-Lê o arquivo CSV de latências (`/tmp/latencias_urllc.csv`) e gera estatísticas e gráfico.
+Lê o arquivo CSV de latências (`docs/resultados/latencias_urllc.csv`) e gera estatísticas e gráfico.
 
 ### Estatísticas calculadas
 
@@ -323,15 +323,15 @@ Parâmetros:
 ```bash
 /root/atividade-final-redes-ppgti/.venv/bin/python3 \
     etapa3_solucao/coletar_resultados.py \
-    /tmp/latencias_urllc.csv \
-    /tmp/grafico_latencias.png \
-    /tmp/eventos_controle.txt
+    docs/resultados/latencias_urllc.csv \
+    docs/resultados/grafico_latencias.png \
+    docs/resultados/eventos_controle.txt
 ```
 
 Parâmetros:
-- `/tmp/latencias_urllc.csv`: arquivo CSV com as latências medidas.
-- `/tmp/grafico_latencias.png`: caminho do gráfico de saída.
-- `/tmp/eventos_controle.txt`: arquivo com eventos de ativação/desativação do controle.
+- `docs/resultados/latencias_urllc.csv`: arquivo CSV com as latências medidas.
+- `docs/resultados/grafico_latencias.png`: caminho do gráfico de saída.
+- `docs/resultados/eventos_controle.txt`: arquivo com eventos de ativação/desativação do controle.
 
 ---
 
@@ -365,6 +365,6 @@ done
 
 3. **QoS/HTB no OVS**: a configuração das filas HTB pode gerar warnings do kernel (`quantum of class is big`), mas isso não impede o funcionamento. O importante é garantir que a fila 1 tenha `min-rate` alto o suficiente para priorizar o uRLLC.
 
-4. **Latência one-way vs. RTT**: o gerador mede RTT, enquanto o monitor mede latência one-way. O arquivo final `/tmp/latencias_urllc.csv` usa a medição one-way do monitor, que é mais representativa para uRLLC.
+4. **Latência one-way vs. RTT**: o gerador mede RTT, enquanto o monitor mede latência one-way. O arquivo final `docs/resultados/latencias_urllc.csv` usa a medição one-way do monitor, que é mais representativa para uRLLC.
 
 5. **Controle preventivo vs. reativo**: o modo preventivo garante latência baixa desde o início, mas impede a medição do momento de ativação do controle. O modo reativo mostra o closed loop funcionando, mas pode permitir algumas violações antes da ativação.

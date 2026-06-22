@@ -43,7 +43,17 @@ def calcular_estatisticas(valores):
     return quantidade, media, minimo, maximo, violacoes
 
 
-def gerar_grafico(latencias, caminho_saida, caminho_eventos="/tmp/eventos_controle.txt"):
+DIRETORIO_PROJETO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DIRETORIO_RESULTADOS = os.path.join(DIRETORIO_PROJETO, "docs", "resultados")
+if not os.path.exists(DIRETORIO_RESULTADOS):
+    os.makedirs(DIRETORIO_RESULTADOS)
+
+ARQUIVO_LATENCIAS_PADRAO = os.path.join(DIRETORIO_RESULTADOS, "latencias_urllc.csv")
+ARQUIVO_GRAFICO_PADRAO = os.path.join(DIRETORIO_RESULTADOS, "grafico_latencias.png")
+ARQUIVO_EVENTOS_PADRAO = os.path.join(DIRETORIO_RESULTADOS, "eventos_controle.txt")
+
+
+def gerar_grafico(latencias, caminho_saida, caminho_eventos=ARQUIVO_EVENTOS_PADRAO):
     import matplotlib.pyplot as plt
 
     if not latencias:
@@ -78,9 +88,9 @@ def gerar_grafico(latencias, caminho_saida, caminho_eventos="/tmp/eventos_contro
 
 
 def main():
-    caminho_csv = sys.argv[1] if len(sys.argv) > 1 else "/tmp/latencias_urllc.csv"
-    caminho_saida = sys.argv[2] if len(sys.argv) > 2 else "/tmp/grafico_latencias.png"
-    caminho_eventos = sys.argv[3] if len(sys.argv) > 3 else "/tmp/eventos_controle.txt"
+    caminho_csv = sys.argv[1] if len(sys.argv) > 1 else ARQUIVO_LATENCIAS_PADRAO
+    caminho_saida = sys.argv[2] if len(sys.argv) > 2 else ARQUIVO_GRAFICO_PADRAO
+    caminho_eventos = sys.argv[3] if len(sys.argv) > 3 else ARQUIVO_EVENTOS_PADRAO
 
     latencias = ler_latencias(caminho_csv)
     quantidade, media, minimo, maximo, violacoes = calcular_estatisticas(latencias)
