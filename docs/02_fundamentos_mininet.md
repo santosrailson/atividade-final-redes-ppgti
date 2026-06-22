@@ -113,6 +113,6 @@ A função `info(...)` exibe mensagens na tela durante a execução do script.
 
 ## 9. Relação com o projeto
 
-Neste projeto, o Mininet é usado para emular a rede de transporte 5G com quatro roteadores. Os hosts geram tráfego uRLLC e eMBB, e os switches/roteadores executam programas P4 para classificar e priorizar o tráfego.
+Neste projeto, o Mininet é usado para emular a rede de transporte 5G com quatro switches OVS em linha. Os hosts geram tráfego uRLLC e eMBB, e os switches executam regras OpenFlow e filas QoS/HTB para classificar e priorizar o tráfego.
 
 O domínio da API Python do Mininet é essencial para automatizar a criação da topologia, a execução de testes e a coleta de métricas.
