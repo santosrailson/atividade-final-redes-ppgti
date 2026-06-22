@@ -13,7 +13,6 @@ __pycache__/
 .venv/
 venv/
 env/
-.p4libs/
 results/*
 !results/.gitkeep
 docs/resultados/*
