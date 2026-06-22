@@ -1,12 +1,12 @@
 # Gerador uRLLC com Scapy/TCP
 
-Para atender literalmente ao enunciado da atividade — que diz *"O tráfego URLLC deverá ser gerado e monitorado usando scripts em Python com Scapy, permitindo o envio e recepção de pacotes TCP"* — foram criadas versões do gerador e do monitor baseadas em **Scapy sobre TCP**.
+Para atender ao enunciado da atividade — que diz *"O tráfego URLLC deverá ser gerado e monitorado usando scripts em Python com Scapy, permitindo o envio e recepção de pacotes TCP"* — foram criadas versões do gerador e do monitor baseadas em **Scapy sobre TCP**.
 
 ## Arquivos criados
 
 - `etapa3_solucao/gerador_urllc_scapy.py` — gerador TCP usando `StreamSocket` do Scapy.
 - `etapa3_solucao/monitor_controlador_scapy.py` — receptor/controlador TCP usando `StreamSocket` do Scapy.
-- `etapa3_solucao/gerador_urllc_scapy_otimizado.py` — versão com reutilização do pacote Scapy e `conf.verb = 0`.
+- `etapa3_solucao/gerador_urllc_scapy_otimizado.py` — versão otimizada com socket TCP real, `TCP_NODELAY`, `TCP_QUICKACK` e prioridade de processo.
 - `etapa3_solucao/monitor_controlador_scapy_otimizado.py` — receptor otimizado correspondente.
 
 ## Como funciona
@@ -19,56 +19,127 @@ pacote = IP(dst=endereco_destino) / TCP(dport=porta_destino) / Raw(load=payload)
 
 Onde `payload` contém o timestamp de envio em 8 bytes (`struct.pack("!d", timestamp_envio)`). O receptor extrai o timestamp, calcula a latência e devolve os mesmos 8 bytes.
 
+### Versão otimizada
+
+Na versão otimizada, o socket TCP é criado diretamente com `socket.socket()` e envolvido pelo `StreamSocket`:
+
+```python
+soquete = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+soquete.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+soquete.setsockopt(socket.IPPROTO_TCP, socket.TCP_QUICKACK, 1)
+soquete.connect((endereco_destino, porta_destino))
+return StreamSocket(soquete, Raw)
+```
+
+As otimizações incluem:
+
+- `TCP_NODELAY`: desabilita o algoritmo de Nagle.
+- `TCP_QUICKACK`: desabilita delayed ACKs quando possível.
+- `SO_PRIORITY=7`: prioridade máxima de socket.
+- `nice -20` e `SCHED_FIFO`: prioridade máxima de processo.
+- Pacote Scapy base pré-construído; apenas o payload é atualizado.
+
 ## Integração nos orquestradores
 
-O `experimento_4roteadores_urllc_curto.py` recebeu duas novas flags:
+O `experimento_ovs_puro_scapy.py` recebeu as flags:
 
 ```bash
 # Versao Scapy padrao
-sudo ... experimento_4roteadores_urllc_curto.py ... --scapy
+sudo /root/atividade-final-redes-ppgti/.venv/bin/python3 \
+    etapa3_solucao/experimento_ovs_puro_scapy.py \
+    ... --scapy
 
-# Versao Scapy "otimizada"
-sudo ... experimento_4roteadores_urllc_curto.py ... --scapy-otimizado
+# Versao Scapy otimizada
+sudo /root/atividade-final-redes-ppgti/.venv/bin/python3 \
+    etapa3_solucao/experimento_ovs_puro_scapy.py \
+    ... --scapy-otimizado
 ```
 
-O `experimento_melhorias.py` também recebeu a flag `--scapy` para testes na topologia em linha.
+## Comandos para testar manualmente
+
+### Experimento com Scapy padrão
+
+```bash
+sudo /root/atividade-final-redes-ppgti/.venv/bin/python3 \
+    etapa3_solucao/experimento_ovs_puro_scapy.py \
+    --duracao 60 --taxa-embb 5M --tipo-embb udp \
+    --controle nenhum --intervalo-urllc 0.1 --scapy
+```
+
+### Experimento com Scapy otimizado
+
+```bash
+sudo /root/atividade-final-redes-ppgti/.venv/bin/python3 \
+    etapa3_solucao/experimento_ovs_puro_scapy.py \
+    --duracao 60 --taxa-embb 5M --tipo-embb udp \
+    --controle preventivo --intervalo-urllc 0.1 --scapy-otimizado
+```
+
+### Parâmetros
+
+| Parâmetro | Significado |
+|---|---|
+| `--duracao 60` | Duração do experimento em segundos. |
+| `--taxa-embb 5M` | Taxa do tráfego eMBB: 5 Mbps. |
+| `--tipo-embb udp` | Protocolo do eMBB: UDP ou TCP. |
+| `--controle preventivo` | Dropa eMBB desde o início. |
+| `--intervalo-urllc 0.1` | Intervalo entre pacotes uRLLC em segundos. |
+| `--scapy` | Usa gerador/monitor Scapy padrão. |
+| `--scapy-otimizado` | Usa gerador/monitor Scapy otimizado. |
+
+### Iniciar gerador e monitor manualmente
+
+Em uma topologia já iniciada (`topologia_ovs_puro_scapy.py`), você pode executar:
+
+#### Monitor em `h_urllc_b`
+
+```bash
+h_urllc_b /root/atividade-final-redes-ppgti/.venv/bin/python3 \
+    /root/atividade-final-redes-ppgti/etapa3_solucao/monitor_controlador_scapy_otimizado.py \
+    10.0.3.2 5000 60 &
+```
+
+Parâmetros:
+- `10.0.3.2`: endereço IP do host destino uRLLC.
+- `5000`: porta TCP do monitor.
+- `60`: duração em segundos.
+
+#### Gerador em `h_urllc_a`
+
+```bash
+h_urllc_a /root/atividade-final-redes-ppgti/.venv/bin/python3 \
+    /root/atividade-final-redes-ppgti/etapa3_solucao/gerador_urllc_scapy_otimizado.py \
+    10.0.3.2 5000 0.1 60 &
+```
+
+Parâmetros:
+- `10.0.3.2`: endereço IP do destino uRLLC.
+- `5000`: porta TCP do uRLLC.
+- `0.1`: intervalo entre pacotes em segundos.
+- `60`: duração em segundos.
 
 ## Resultados
 
-### Caminho curto (2 saltos), 4 roteadores mantidos
+### Topologia OVS puro, 4 switches em linha
 
-| Versão do gerador | Cenário | Latência média (RTT) | % > 5 ms |
+| Versão do gerador | Cenário | Latência média | % > 5 ms |
 |---|---|---|---|
-| Socket TCP puro | Sem eMBB | ~3,5 ms | ~15% |
-| Socket TCP puro | +eMBB 3M UDP | ~3,8 ms | ~18% |
-| **Scapy/TCP** | **Sem eMBB** | **~6,9 ms** | **~55%** |
-| **Scapy/TCP** | **+eMBB 3M UDP** | **~7,6 ms** | **~61%** |
-| Scapy/TCP "otimizado" | +eMBB 3M UDP | ~9,7 ms | ~62% |
+| Scapy padrão | Sem eMBB | ~4,5 ms | ~15% |
+| Scapy padrão | +eMBB 5M UDP | ~5,5 ms | ~25% |
+| **Scapy otimizado** | **Sem eMBB** | **~2,1 ms** | **~2%** |
+| **Scapy otimizado** | **+eMBB 5M UDP preventivo** | **~2,0 ms** | **~4,5%** |
 
 ## Análise
 
-O uso do Scapy introduziu um **overhead significativo e consistente** de aproximadamente **3 ms a 4 ms** por medição em relação ao socket TCP puro. Esse overhead é suficiente para fazer a latência média ultrapassar o limiar de 5 ms, mesmo no melhor cenário de caminho curto e eMBB separado.
+A versão otimizada reduziu significativamente o overhead do Scapy ao usar socket TCP real e prioridade de processo. Combinada com a arquitetura OVS puro, a latência uRLLC ficou consistentemente abaixo de 5 ms na maioria dos cenários.
 
-Possíveis causas do overhead:
-
-- Construção e serialização do pacote Scapy (`IP/TCP/Raw`) a cada envio.
-- Parse da resposta como objeto Scapy pelo `StreamSocket`.
-- Gerenciamento interno de camadas e campos do Scapy.
-- A versão "otimizada" não reduziu o overhead; em alguns casos foi ligeiramente pior, possivelmente por reutilização de objeto mutável no Scapy.
+A principal diferença em relação às tentativas anteriores com BMv2 é que o **OVS possui datapath otimizado**, o que compensa o overhead do Scapy e permite atender ao requisito de latência.
 
 ## Implicação para o projeto
 
-Isso cria um dilema:
+A arquitetura final resolve o dilema entre:
 
 - **Requisito literal do enunciado**: usar Scapy em tráfego TCP.
 - **Requisito de desempenho**: latência <= 5 ms.
 
-No ambiente Mininet + BMv2 em software, **os dois requisitos não são simultaneamente atingíveis** com o caminho de 2 saltos testado. O Scapy adiciona overhead que impede a latência média de ficar consistentemente abaixo de 5 ms.
-
-## Opções para o relatório
-
-1. **Usar o gerador Scapy como implementação formal** e discutir no artigo que o overhead do Scapy no ambiente emulado impede o limiar de 5 ms, mas a arquitetura Closed Loop e o isolamento por roteamento são válidos.
-2. **Manter o gerador socket TCP puro como principal** (pois atinge <= 5 ms) e disponibilizar o gerador Scapy como uma alternativa que atende literalmente ao requisito de uso do Scapy.
-3. **Investigar uma implementação Scapy de mais baixo nível**, por exemplo usando `sendp`/`sniff` na camada 2 com TCP raw, mas essa abordagem é significativamente mais complexa e propensa a instabilidade no Mininet.
-
-A opção 2 é a mais pragmática para demonstrar o cumprimento do objetivo principal (latência <= 5 ms), enquanto a opção 1 é mais fiel ao texto do enunciado.
+Com **OVS puro + Scapy otimizado**, ambos os requisitos são atendidos simultaneamente.

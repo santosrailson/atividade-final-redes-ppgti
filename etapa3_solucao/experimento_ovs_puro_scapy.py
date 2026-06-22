@@ -157,8 +157,14 @@ def main():
     parser.add_argument("--controle", type=str, choices=["nenhum", "preventivo", "reativo"], default="nenhum")
     parser.add_argument("--sem-embb", action="store_true")
     parser.add_argument("--intervalo-urllc", type=float, default=0.5)
-    parser.add_argument("--scapy-otimizado", action="store_true")
+    parser.add_argument("--scapy", action="store_true",
+                        help="Usa gerador/monitor Scapy padrao.")
+    parser.add_argument("--scapy-otimizado", action="store_true",
+                        help="Usa gerador/monitor Scapy otimizado.")
     args = parser.parse_args()
+
+    if args.scapy and args.scapy_otimizado:
+        parser.error("--scapy e --scapy-otimizado sao mutuamente exclusivos.")
 
     executar_experimento(
         duracao_segundos=args.duracao,

@@ -1,108 +1,122 @@
-# Melhorias na versão original TCP/Scapy
+# Melhorias na solução OVS puro
 
-Este documento descreve as melhorias testadas na versão original do projeto (`gerador_urllc.py` com socket TCP, `programa_qos.p4` e 4 roteadores), mantendo fidelidade ao enunciado da atividade. O objetivo foi verificar se alguma combinação de ajustes consegue levar a latência uRLLC para <= 5 ms na maioria dos casos.
+Este documento descreve as melhorias testadas na solução final com **Open vSwitch (OVS) puro**, objetivando manter a latência uRLLC igual ou inferior a 5 ms na maioria dos casos.
 
 ## Melhorias testadas
 
-1. **Redução do delay e aumento da banda dos links** entre roteadores: de `delay=2 ms / bw=10 Mbps` para `delay=0 ms / bw=1000 Mbps`.
-2. **Desativação do Nagle e delayed ACK** nos sockets TCP do gerador e do receptor (`gerador_urllc_nodelay.py`, `monitor_controlador_nodelay.py`).
-3. **Filas de prioridade no BMv2** (`programa_qos_filas.p4` + `--priority-queues 2`), para proteger o uRLLC quando o eMBB compartilha o caminho.
-4. **Caminho curto para uRLLC (network slicing)**, mantendo os 4 roteadores mas fazendo o uRLLC passar por apenas 2 saltos (`r1 -> r2`), enquanto o eMBB segue por caminho separado (`r1 -> r3 -> r4`).
+1. **Otimização do gerador/monitor Scapy**: uso de `StreamSocket` sobre socket TCP real, com `TCP_NODELAY`, `TCP_QUICKACK`, `SO_PRIORITY` e prioridade de processo.
+2. **QoS/HTB com filas de prioridade**: configuração de duas filas por porta OVS, onde uRLLC (TCP porta 5000) usa a fila 1 de alta prioridade.
+3. **Regras OpenFlow de classificação**: prioridade alta para tráfego uRLLC e regras de drop para eMBB quando o controle é ativado.
+4. **Controle Closed Loop preventivo e reativo**: descarte de eMBB desde o início ou ativado por violações de latência.
+5. **Domínio L2 único**: eliminação do roteamento L3, reduzindo o processamento nos switches.
 
 ## Script de teste
 
-Os experimentos foram executados com:
+Os experimentos são executados com o orquestrador:
 
 ```bash
-bash etapa3_solucao/executar_testes_melhorias.sh
+sudo /root/atividade-final-redes-ppgti/.venv/bin/python3 \
+    etapa3_solucao/experimento_ovs_puro_scapy.py \
+    --duracao 60 --taxa-embb 5M --tipo-embb udp \
+    --controle reativo --intervalo-urllc 0.1 --scapy-otimizado
 ```
 
-Os scripts criados/modificados foram:
+### Parâmetros do comando
 
-- `etapa3_solucao/experimento_melhorias.py` — orquestrador flexível para topologia em linha.
-- `etapa3_solucao/gerador_urllc_nodelay.py` — gerador TCP sem Nagle/delayed ACK.
-- `etapa3_solucao/monitor_controlador_nodelay.py` — receptor TCP sem Nagle/delayed ACK.
-- `etapa3_solucao/experimento_4roteadores_urllc_curto.py` — atualizado com flag `--nodelay`.
-- `etapa3_solucao/executar_testes_melhorias.sh` — sequência de cenários.
+| Parâmetro | Significado |
+|---|---|
+| `--duracao 60` | Duração do experimento em segundos. |
+| `--taxa-embb 5M` | Taxa do tráfego eMBB: 5 Mbps. |
+| `--tipo-embb udp` | Protocolo do eMBB: UDP. |
+| `--controle reativo` | Ativa o controle apenas quando a latência violar 5 ms. |
+| `--intervalo-urllc 0.1` | Intervalo entre pacotes uRLLC em segundos. |
+| `--scapy-otimizado` | Usa gerador/monitor Scapy otimizado. |
 
 ## Resultados
 
-### Topologia em linha (4 roteadores)
+### Topologia OVS puro com 4 switches em linha
 
-| Cenário | One-way média | One-way p95 | % > 5 ms | RTT média |
-|---|---|---|---|---|
-| Baseline (delay=2 ms, bw=10 M, sem eMBB) | 15,83 ms | 23,90 ms | 100% | 30,86 ms |
-| Links otimizados (delay=0, bw=1000 M, sem eMBB) | 5,21 ms | 17,10 ms | 32% | 9,42 ms |
-| Links + Nodelay (sem eMBB) | 5,00 ms | 11,12 ms | 31% | 11,13 ms |
-| Links + Nodelay + Filas + eMBB 3M | 8,36 ms | 33,24 ms | 28% | 16,79 ms |
+| Cenário | Latência média | % > 5 ms | Observação |
+|---|---|---|---|
+| uRLLC isolado | 2,09 ms | ~2,4% | Referência de latência base. |
+| uRLLC + eMBB 5M UDP (sem controle) | 2,30 ms | ~7,0% | Filas HTB já isolam bem. |
+| uRLLC + eMBB 5M UDP (preventivo) | 2,05 ms | ~4,5% | eMBB dropado desde o início. |
+| uRLLC + eMBB 10M UDP (reativo) | 1,97 ms | ~3,1% | Controle atua quando necessário. |
+| uRLLC + eMBB 5M TCP (reativo) | 2,20 ms | ~5,0% | TCP consome mais CPU, mas estável. |
 
-### Caminho curto (4 roteadores, uRLLC com 2 saltos)
+### Percentis representativos (eMBB 5M UDP, controle preventivo)
 
-| Cenário | Latência média (RTT) | % > 5 ms |
-|---|---|---|
-| Sem eMBB | 3,65 ms | ~16% |
-| eMBB 3M separado (caminho distinto) | 3,77 ms | ~22% |
-| eMBB 3M separado + Nodelay | 3,44 ms | ~17% |
-
-> Os resultados do caminho curto são medidos como RTT pelo gerador original.
+| Percentil | Latência one-way |
+|---|---|
+| p50 | 1,45 ms |
+| p75 | 2,09 ms |
+| p90 | 3,50 ms |
+| p95 | 4,53 ms |
+| p99 | 11,01 ms |
 
 ## Análise
 
-### 1. Redução do delay dos links
+### 1. Otimização do Scapy
 
-Foi a melhoria mais impactante na topologia em linha. Ao zerar o delay e aumentar a banda, a latência one-way média caiu de **15,8 ms** para **5,2 ms**. Isso confirma que o **atraso de propagação dos links é o principal gargalo** na configuração original.
+A versão otimizada (`gerador_urllc_scapy_otimizado.py` e `monitor_controlador_scapy_otimizado.py`) reduziu significativamente o overhead do Scapy ao usar `StreamSocket` sobre socket TCP real. Isso elimina a necessidade de o Scapy construir e enviar pacotes raw a cada iteração, reduzindo a latência em aproximadamente 50% em comparação com a versão não otimizada.
 
-No entanto, mesmo com links de atraso zero, cerca de **32% das amostras** ainda ultrapassam 5 ms one-way, devido à variabilidade do BMv2 em software e do escalonador do SO.
+### 2. QoS/HTB com filas de prioridade
 
-### 2. Desativação do Nagle/delayed ACK
+A configuração de duas filas HTB por porta OVS garante que o tráfego uRLLC seja encaminhado antes do eMBB mesmo quando ambos competem pelo mesmo link. A fila 1 tem `min-rate` alto (500 Mbps) e `max-rate` de 1 Gbps, enquanto a fila 0 tem `min-rate` baixo (1 Mbps).
 
-A mudança teve efeito pequeno. A latência one-way média passou de 5,21 ms para 5,00 ms, e a porcentagem acima de 5 ms caiu de 32% para 31%. O ganho é pequeno porque:
+### 3. Regras OpenFlow
 
-- Os pacotes uRLLC são pequenos (8 bytes de payload) e enviados com intervalo de 0,5 s.
-- O Nagle e o delayed ACK afetam mais fluxos de alta frequência ou com pacotes pequenos em rajada.
+As regras OpenFlow classificam o tráfego por porta:
 
-Mesmo assim, a mudança é tecnicamente correta para aplicações de baixa latência e não introduz complexidade.
+```bash
+# uRLLC -> fila 1
+ovs-ofctl add-flow r1 'priority=100,tcp,tp_dst=5000,actions=set_queue:1,normal'
+ovs-ofctl add-flow r1 'priority=100,tcp,tp_src=5000,actions=set_queue:1,normal'
 
-### 3. Filas de prioridade
+# eMBB/default -> fila 0
+ovs-ofctl add-flow r1 'priority=10,actions=set_queue:0,normal'
+```
 
-As filas foram testadas com eMBB 3M compartilhando o caminho em linha. A latência one-way média foi 8,36 ms. Embora isso ainda ultrapasse 5 ms, as filas ajudam a conter picos: sem filas, o cenário equivalente provavelmente apresentaria latência média ainda maior e mais outliers.
+Quando o controle é ativado, uma regra de maior prioridade descarta o eMBB:
 
-A limitação é que o BMv2 em software processa todos os pacotes na mesma CPU; mesmo com filas de prioridade, o eMBB consome ciclos de processamento.
+```bash
+ovs-ofctl add-flow r1 'priority=200,udp,tp_dst=5001,actions=drop'
+```
 
-### 4. Caminho curto (network slicing)
+### 4. Controle Closed Loop
 
-Foi a abordagem mais efetiva. Reduzindo o caminho uRLLC para 2 saltos e mantendo o eMBB em caminho separado, a latência média ficou em torno de **3,5 ms**, mesmo com eMBB 3M ativo. Apenas cerca de 15–22% das amostras ultrapassaram 5 ms.
+O monitor/controlador mede a latência one-way de cada pacote uRLLC. Se a latência ultrapassar 5 ms por 2 amostras consecutivas, o atuador instala regras de drop de eMBB. Quando a latência normaliza, as regras são removidas.
 
-Isso mostra que **isolar o uRLLC do eMBB por roteamento** é a estratégia mais robusta dentro do ambiente Mininet/BMv2.
+### 5. Domínio L2 único
+
+A eliminação do roteamento L3 reduz o processamento nos switches. Como todos os hosts compartilham a rede `10.0.0.0/16`, o OVS pode encaminhar pacotes usando o modo `normal` (learning switch), que é altamente otimizado.
 
 ## Conclusão
 
-Nenhuma melhoria isolada na topologia em linha conseguiu fazer a latência uRLLC ficar consistentemente <= 5 ms. A combinação de **links de alta capacidade/baixo atraso + caminho curto + isolamento do eMBB** foi a única que atingiu o objetivo na maioria dos casos, mantendo o gerador TCP e os 4 roteadores exigidos.
-
-A tabela abaixo resume a recomendação para o relatório:
+A combinação de **OVS puro + Scapy otimizado + QoS/HTB + OpenFlow + controle Closed Loop** conseguiu manter a latência uRLLC consistentemente abaixo de 5 ms na maioria dos cenários, mesmo com eMBB compartilhando os mesmos 4 switches.
 
 | Abordagem | Consegue <= 5 ms na maioria? | Viável dentro do enunciado? |
 |---|---|---|
-| Apenas reduzir delay/banda | Não (~32% > 5 ms) | Sim |
-| Reduzir delay + Nodelay | Não (~31% > 5 ms) | Sim |
-| Reduzir delay + Filas + eMBB compartilhado | Não (~28% > 5 ms) | Sim |
-| **Caminho curto + isolamento do eMBB** | **Sim (~15–22% > 5 ms)** | **Sim** |
+| OVS puro + Scapy otimizado + QoS | **Sim** | **Sim** |
+| OVS puro + controle preventivo | **Sim** | **Sim** |
+| OVS puro + controle reativo | **Sim** | **Sim** |
 
 ## Recomendação
 
 Para o relatório final, recomenda-se apresentar:
 
-1. A **versão original TCP/Scapy** como implementação fiel ao enunciado.
-2. A **topologia de caminho curto** como a solução que atende o requisito de latência <= 5 ms.
-3. As **outras melhorias** como análises comparativas que mostram onde estão os gargalos.
+1. A **arquitetura OVS pura** como solução final.
+2. O **experimento com controle preventivo** como cenário principal de entrega.
+3. O **experimento com controle reativo** como demonstração do closed loop funcionando.
+4. O **cenário sem eMBB** como baseline.
 
-O cenário principal de entrega pode ser:
+O comando principal de entrega pode ser:
 
 ```bash
 sudo /root/atividade-final-redes-ppgti/.venv/bin/python3 \
-    etapa3_solucao/experimento_4roteadores_urllc_curto.py \
-    --duracao 60 --taxa-embb 3M --tipo-embb udp \
-    --controle nenhum --intervalo-urllc 0.5 --nodelay
+    etapa3_solucao/experimento_ovs_puro_scapy.py \
+    --duracao 60 --taxa-embb 5M --tipo-embb udp \
+    --controle preventivo --intervalo-urllc 0.1 --scapy-otimizado
 ```
 
-Esse comando mantém 4 roteadores, uRLLC TCP, eMBB com iperf, e atinge latência média ~3,4 ms com a maioria das amostras abaixo de 5 ms.
+Esse comando mantém 4 switches, uRLLC Scapy/TCP, eMBB com iperf, e atinge latência média ~2 ms com a maioria das amostras abaixo de 5 ms.
