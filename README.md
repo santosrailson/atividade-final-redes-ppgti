@@ -6,6 +6,21 @@ Projeto final da disciplina Redes de Computadores do Mestrado em Tecnologia da I
 
 Desenvolver um sistema de monitoramento e controle em malha fechada para garantir que aplicações do tipo uRLLC não excedam 5 ms de latência fim-a-fim na rede de transporte de uma operadora 5G, coexistindo com tráfego eMBB de alto volume.
 
+## Ambiente técnico
+
+Esta atividade foi desenvolvida e executada no seguinte ambiente:
+
+| Item | Especificação |
+|---|---|
+| Sistema operacional | Debian GNU/Linux 13 (trixie) |
+| Kernel | Linux 6.12.85+deb13-amd64 (SMP, PREEMPT_DYNAMIC) |
+| Arquitetura | x86_64 |
+| Python do sistema | 3.13.5 |
+| Ambiente virtual | `/root/atividade-final-redes-ppgti/.venv` (Python 3.13.5) |
+| Scapy | 2.7.0 |
+
+> **Observação**: por ser um ambiente baseado em Debian 13 com Python 3.13, algumas dependências tradicionais do ecossistema Mininet/P4 podem exigir instalação manual ou ajustes de compatibilidade. Os scripts da atividade foram adaptados para rodar nesse ambiente.
+
 ## Tecnologias
 
 - **Mininet**: emulação da topologia de rede.
