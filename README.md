@@ -1,12 +1,17 @@
 # Sistema de Monitoramento e Controle Closed Loop uRLLC/eMBB — Versão macOS
 
-Adaptação, para execução no macOS, do sistema de monitoramento e controle em
-malha fechada (*closed loop*) que garante que aplicações **uRLLC** não
-excedam **5 ms** de latência fim-a-fim em uma rede de transporte 5G emulada,
-mesmo coexistindo com tráfego **eMBB** de alto volume. Esta pasta é
-autocontida: reúne topologia, geração/monitoramento de tráfego, controle e
-análise estatística em um único lugar, pronta para gerar os resultados e
-gráficos usados no artigo final da disciplina.
+Projeto final da disciplina Redes de Computadores (PPGTI). Sistema de
+monitoramento e controle em malha fechada (*closed loop*) que garante que
+aplicações **uRLLC** não excedam **5 ms** de latência fim-a-fim em uma rede
+de transporte 5G emulada, mesmo coexistindo com tráfego **eMBB** de alto
+volume.
+
+Todo o código-fonte, adaptado para rodar no macOS via Docker, está em
+[`solucao_macos/`](solucao_macos/): um ambiente autocontido que reúne
+topologia, geração/monitoramento de tráfego, controle e análise estatística
+em um único lugar, pronto para gerar os resultados e gráficos usados no
+artigo final. **Os comandos abaixo devem ser executados de dentro dessa
+pasta** (`cd solucao_macos`).
 
 ## Por que Docker no macOS?
 
@@ -17,8 +22,8 @@ macOS** (kernel Darwin). Não é possível rodá-los nativamente aqui.
 A solução padrão da comunidade Mininet para isso é rodar tudo dentro de um
 **container Linux via Docker Desktop for Mac** — o Docker Desktop já mantém
 uma VM Linux internamente, então o container roda um kernel Linux de
-verdade, e o Mininet funciona normalmente dentro dele. Esta pasta traz um
-`Dockerfile` pronto para isso.
+verdade, e o Mininet funciona normalmente dentro dele. A pasta
+`solucao_macos/` traz um `Dockerfile` pronto para isso.
 
 > O Open vSwitch é configurado para usar o **datapath em userspace**
 > (`datapath="user"` / `datapath_type=netdev`), que não exige o módulo de
@@ -36,32 +41,37 @@ verdade, e o Mininet funciona normalmente dentro dele. Esta pasta traz um
    Python, Scapy, iperf3, pandas, matplotlib e scipy ficam todos dentro da
    imagem Docker.
 
-## Estrutura desta pasta
+## Estrutura do repositório
 
 ```
-solucao_macos/
-├── Dockerfile                  # Imagem Linux (Ubuntu 22.04) com Mininet + OVS + Python
-├── docker-compose.yml          # Sobe o container privilegiado com um comando
-├── entrypoint.sh               # Inicializa o Open vSwitch dentro do container
-├── requirements.txt             # Dependências Python (scapy, pandas, numpy, matplotlib, scipy)
-├── topologia.py                 # Topologia Mininet: 4 switches OVS em linha + 4 hosts
-├── experimento.py                # Orquestrador do experimento (closed loop completo)
-├── gerador_urllc.py              # Gerador de tráfego uRLLC via Scapy/TCP
-├── monitor_controlador.py        # Monitor de latência + controlador closed loop
-├── gerador_embb.py               # Gerador/servidor de tráfego eMBB via iperf3
-├── analisar_resultados.py        # Estatísticas + gráficos de UM experimento
-├── comparar_cenarios.py          # Estatísticas + gráficos comparando VÁRIOS experimentos
-├── executar_bateria_testes.sh    # Roda os 4 cenários padrão e já compara no final
-└── resultados/                   # CSVs, gráficos (.png) e resumos (.txt) gerados
+.
+├── README.md                           # este arquivo
+└── solucao_macos/
+    ├── Dockerfile                      # Imagem Linux (Ubuntu 22.04) com Mininet + OVS + Python
+    ├── docker-compose.yml              # Sobe o container privilegiado com um comando
+    ├── entrypoint.sh                   # Inicializa o Open vSwitch dentro do container
+    ├── requirements.txt                # Dependências Python (scapy, pandas, numpy, matplotlib, scipy)
+    ├── patch_mininet_r2q.py            # Corrige aviso de kernel do HTB (aplicado no build)
+    ├── patch_mininet_fixlimits.py      # Corrige aviso de limites de recursos (aplicado no build)
+    ├── topologia.py                    # Topologia Mininet: 4 switches OVS em linha + 4 hosts
+    ├── experimento.py                  # Orquestrador do experimento (closed loop completo)
+    ├── gerador_urllc.py                # Gerador de tráfego uRLLC via Scapy/TCP
+    ├── monitor_controlador.py          # Monitor de latência + controlador closed loop
+    ├── gerador_embb.py                 # Gerador/servidor de tráfego eMBB via iperf3
+    ├── analisar_resultados.py          # Estatísticas + gráficos de UM experimento
+    ├── comparar_cenarios.py            # Estatísticas + gráficos comparando VÁRIOS experimentos
+    ├── executar_bateria_testes.sh      # Roda os 4 cenários padrão e já compara no final
+    └── resultados/                     # CSVs, gráficos (.png) e resumos (.txt) gerados
 ```
 
 ## Passo a passo
 
 ### 1. Construir a imagem
 
-No Terminal, dentro desta pasta (`solucao_macos/`):
+No Terminal, a partir da raiz do repositório:
 
 ```bash
+cd solucao_macos
 docker compose build
 ```
 
