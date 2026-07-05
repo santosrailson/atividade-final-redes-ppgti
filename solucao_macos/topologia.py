@@ -1,25 +1,47 @@
 #!/usr/bin/env python3
 """
-Topologia OVS puro (4 switches em linha) para uRLLC com Scapy/TCP.
+Topologia da rede de transporte 5G emulada com Mininet + Open vSwitch.
 
-Todos os roteadores da rede de transporte sao switches OVS.
-A rede e um unico dominio L2 (/16) para evitar roteamento L3 nos switches.
-A priorizacao do uRLLC e feita via QoS/filas OpenFlow.
+Representa os "4 roteadores da rede de transporte" pedidos no
+enunciado do projeto como 4 switches OVS em linha:
+
+    h_urllc_a --\\                                    /-- h_urllc_b
+                 r1 ---- r2 ---- r3 ---- r4
+    h_embb_a  --/                                    \\-- h_embb_b
+
+Todos os hosts estão no mesmo domínio L2 (rede 10.0.0.0/16), então os
+switches funcionam como switches "normais" (aprendizado de MAC) e não
+precisamos de roteamento L3 dentro do Mininet. A diferenciação de
+classe de tráfego (uRLLC vs eMBB) é feita inteiramente via QoS/filas
+do OpenFlow, não por rotas diferentes.
+
+Adaptação para macOS: o OVSSwitch é criado com datapath="user", ou
+seja, o encaminhamento de pacotes roda em userspace (processo
+ovs-vswitchd) em vez do módulo de kernel openvswitch.ko. Isso é
+necessário porque, dentro do container Docker usado no macOS, o
+kernel da VM do Docker Desktop normalmente não tem esse módulo
+carregado. As regras de QoS (tc/HTB) continuam funcionando
+normalmente, pois atuam diretamente nas interfaces de rede (veth),
+independente do tipo de datapath do OVS.
 """
 
 import os
 import subprocess
-import sys
-import time
 
 from mininet.net import Mininet
-from mininet.node import Host, OVSSwitch
+from mininet.node import OVSSwitch
 from mininet.link import TCLink
 from mininet.cli import CLI
 from mininet.log import setLogLevel, info
 
 
 def configurar_interfaces_hosts(rede):
+    """Desativa IPv6 e desliga offload de checksum em todas as interfaces.
+
+    O offload de checksum feito pela NIC (real ou virtual) pode
+    interferir na captura/injeção de pacotes crus feita pelo Scapy,
+    então preferimos calcular os checksums em software.
+    """
     for no in rede.hosts + rede.switches:
         no.cmd("sysctl -w net.ipv6.conf.all.disable_ipv6=1")
         no.cmd("sysctl -w net.ipv6.conf.default.disable_ipv6=1")
@@ -32,6 +54,15 @@ def configurar_interfaces_hosts(rede):
 
 
 def configurar_qos_ovs(switch, interface):
+    """Cria, em cada porta do switch, duas filas HTB (Hierarchical Token Bucket):
+
+    - Fila 0: prioridade normal (tráfego eMBB e demais fluxos).
+    - Fila 1: alta prioridade, com min-rate elevado, reservada ao uRLLC.
+
+    O "min-rate" da fila 1 garante banda mínima garantida para o
+    tráfego sensível à latência mesmo quando o link está congestionado
+    pelo eMBB.
+    """
     switch.cmd(
         "ovs-vsctl -- set port %s qos=@newqos "
         "-- --id=@newqos create QoS type=linux-htb other-config:max-rate=1000000000 "
@@ -43,6 +74,15 @@ def configurar_qos_ovs(switch, interface):
 
 
 def configurar_ovs(switch):
+    """Sobe as interfaces do switch e instala as regras OpenFlow de QoS.
+
+    O switch continua se comportando como um switch L2 "normal"
+    (aprendizado automático de MAC via ação `normal`); as regras
+    apenas marcam qual fila de saída cada pacote deve usar:
+
+    - TCP porta 5000 (uRLLC)      -> fila 1 (alta prioridade)
+    - Qualquer outro tráfego       -> fila 0 (prioridade normal / eMBB)
+    """
     info("*** Configurando OVS %s\n" % switch.name)
 
     switch.cmd("ip link set %s up" % switch.name)
@@ -53,15 +93,12 @@ def configurar_ovs(switch):
     ofctl = "ovs-ofctl -O OpenFlow13"
     switch.cmd("%s del-flows %s" % (ofctl, switch.name))
 
-    # OVS funciona como L2 learning switch (normal). Regras apenas para QoS.
-    # uRLLC (porta 5000 TCP) -> fila 1 (alta prioridade)
     switch.cmd(
         "%s add-flow %s 'priority=100,tcp,tp_dst=5000,actions=set_queue:1,normal'" % (ofctl, switch.name)
     )
     switch.cmd(
         "%s add-flow %s 'priority=100,tcp,tp_src=5000,actions=set_queue:1,normal'" % (ofctl, switch.name)
     )
-    # eMBB e default -> fila 0
     switch.cmd(
         "%s add-flow %s 'priority=10,actions=set_queue:0,normal'" % (ofctl, switch.name)
     )
@@ -71,14 +108,21 @@ def configurar_ovs(switch):
 
 
 def limpar_ambiente():
+    """Remove resíduos de execuções anteriores (bridges OVS, interfaces veth).
+
+    Útil quando um experimento anterior não foi finalizado corretamente
+    (ex.: container reiniciado no meio de um teste).
+    """
     info("*** Limpando ambiente Mininet/OVS residual\n")
     os.system("mn -c 2>/dev/null")
     for nome_bridge in ["r1", "r2", "r3", "r4"]:
         os.system("ovs-vsctl --if-exists del-br %s 2>/dev/null" % nome_bridge)
     padrao_interfaces = "r[1-4]-eth|h_[a-z_]+-eth"
     try:
-        saida = subprocess.check_output("ip -o link show | awk -F': ' '{print $2}' | grep -E '^(%s)'" % padrao_interfaces,
-                                        shell=True, text=True)
+        saida = subprocess.check_output(
+            "ip -o link show | awk -F': ' '{print $2}' | grep -E '^(%s)'" % padrao_interfaces,
+            shell=True, text=True
+        )
         for interface in saida.splitlines():
             interface = interface.strip()
             if interface:
@@ -88,21 +132,21 @@ def limpar_ambiente():
 
 
 def criar_topologia():
+    """Monta a topologia completa (hosts + 4 switches OVS) e devolve a rede pronta para uso."""
     limpar_ambiente()
     rede = Mininet(link=TCLink, switch=OVSSwitch)
 
     info("*** Criando hosts\n")
-    # Unico dominio L2 /16; hosts se comunicam diretamente via L2
     host_urllc_a = rede.addHost("h_urllc_a", ip="10.0.1.1/16", mac="00:00:00:00:01:01")
     host_embb_a  = rede.addHost("h_embb_a",  ip="10.0.2.1/16", mac="00:00:00:00:02:01")
     host_urllc_b = rede.addHost("h_urllc_b", ip="10.0.3.2/16", mac="00:00:00:00:03:02")
     host_embb_b  = rede.addHost("h_embb_b",  ip="10.0.4.2/16", mac="00:00:00:00:04:02")
 
-    info("*** Criando switches OVS\n")
-    r1 = rede.addSwitch("r1", cls=OVSSwitch, protocols="OpenFlow13")
-    r2 = rede.addSwitch("r2", cls=OVSSwitch, protocols="OpenFlow13")
-    r3 = rede.addSwitch("r3", cls=OVSSwitch, protocols="OpenFlow13")
-    r4 = rede.addSwitch("r4", cls=OVSSwitch, protocols="OpenFlow13")
+    info("*** Criando switches OVS (4 roteadores da rede de transporte)\n")
+    r1 = rede.addSwitch("r1", cls=OVSSwitch, protocols="OpenFlow13", datapath="user")
+    r2 = rede.addSwitch("r2", cls=OVSSwitch, protocols="OpenFlow13", datapath="user")
+    r3 = rede.addSwitch("r3", cls=OVSSwitch, protocols="OpenFlow13", datapath="user")
+    r4 = rede.addSwitch("r4", cls=OVSSwitch, protocols="OpenFlow13", datapath="user")
 
     info("*** Criando links\n")
     rede.addLink(host_urllc_a, r1, bw=100, delay="0ms")
@@ -126,17 +170,19 @@ def criar_topologia():
 
 
 def testar_conectividade(rede):
-    info("*** Testando conectividade uRLLC\n")
+    info("*** Testando conectividade uRLLC (h_urllc_a -> h_urllc_b)\n")
     resultado = rede.getNodeByName("h_urllc_a").cmd("ping -c 4 -4 10.0.3.2")
     info(resultado)
 
 
 if __name__ == "__main__":
+    # Execução standalone: sobe a topologia e abre a CLI do Mininet
+    # para inspeção manual (útil para depuração / demonstração).
     setLogLevel("info")
     rede = criar_topologia()
     testar_conectividade(rede)
 
-    info("*** Abrindo interface de linha de comando\n")
+    info("*** Abrindo interface de linha de comando do Mininet\n")
     CLI(rede)
 
     info("*** Parando rede\n")

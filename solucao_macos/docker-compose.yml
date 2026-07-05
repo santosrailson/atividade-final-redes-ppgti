@@ -1,0 +1,17 @@
+# Sobe o laboratório uRLLC/eMBB em um container Linux privilegiado,
+# necessário para o Mininet criar namespaces de rede e interfaces
+# virtuais. No Docker Desktop for Mac isso roda dentro da VM Linux
+# interna, não afeta o kernel Darwin do host.
+services:
+  urllc-lab:
+    build: .
+    image: urllc-macos-lab
+    container_name: urllc-macos-lab
+    privileged: true
+    stdin_open: true
+    tty: true
+    volumes:
+      # Resultados (CSVs, gráficos, logs) ficam disponíveis também
+      # fora do container, direto no macOS, para anexar ao artigo.
+      - ./resultados:/app/resultados
+    command: bash

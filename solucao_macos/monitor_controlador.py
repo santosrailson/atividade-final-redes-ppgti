@@ -1,11 +1,28 @@
 #!/usr/bin/env python3
 """
-Monitor/controlador uRLLC otimizado com Scapy/TCP (StreamSocket).
+Monitor + controlador closed loop do tráfego uRLLC (Scapy/TCP).
 
-- Recebe pacotes TCP, ecoa payload.
-- Mede latencia one-way (assumindo relogios sincronizados).
-- Controlador closed-loop.
-- Salva latencias em docs/resultados/latencias_urllc.csv.
+Este processo roda no host de destino (h_urllc_b) e cumpre dois papéis:
+
+1. Monitor: recebe cada pacote uRLLC, calcula a latência one-way
+   (chegada - timestamp de envio embutido no payload) e devolve um eco
+   ao gerador. Assume relógios sincronizados entre os hosts (dentro do
+   mesmo container/VM Mininet, o relógio de sistema é compartilhado
+   por todos os namespaces, então essa suposição é válida aqui).
+
+2. Controlador: aplica uma lógica de histerese sobre a latência
+   medida. Se a latência ultrapassa o limiar (5 ms) por
+   `JANELA_VIOLACOES` medições seguidas, escreve um sinal "ativar" em
+   um arquivo compartilhado. O processo orquestrador (experimento.py)
+   lê esse arquivo e instala, via OpenFlow, uma regra que descarta o
+   tráfego eMBB nos switches OVS -- protegendo o uRLLC. Quando a
+   latência volta ao normal por `AMOSTRAS_PARA_NORMALIZAR` medições
+   seguidas, o sinal "desativar" libera o eMBB de novo.
+
+A comunicação monitor -> orquestrador via arquivo (em vez de, por
+exemplo, uma fila em memória) é proposital: monitor e orquestrador
+são processos/hosts Mininet diferentes, então um arquivo em disco
+compartilhado é a forma mais simples de sinalizar entre eles.
 """
 
 import os
@@ -18,14 +35,13 @@ from scapy.all import conf, IP, TCP, Raw, StreamSocket
 
 conf.verb = 0
 
-LIMIAR_LATENCIA_MS = 5.0
-JANELA_VIOLACOES = 2
-AMOSTRAS_PARA_NORMALIZAR = 3
+LIMIAR_LATENCIA_MS = 5.0      # requisito do projeto: uRLLC <= 5 ms fim-a-fim
+JANELA_VIOLACOES = 2          # violações consecutivas para ativar o controle
+AMOSTRAS_PARA_NORMALIZAR = 3  # medições normais consecutivas para desativar
 
-DIRETORIO_PROJETO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DIRETORIO_RESULTADOS = os.path.join(DIRETORIO_PROJETO, "docs", "resultados")
-if not os.path.exists(DIRETORIO_RESULTADOS):
-    os.makedirs(DIRETORIO_RESULTADOS)
+DIRETORIO_PROJETO = os.path.dirname(os.path.abspath(__file__))
+DIRETORIO_RESULTADOS = os.path.join(DIRETORIO_PROJETO, "resultados")
+os.makedirs(DIRETORIO_RESULTADOS, exist_ok=True)
 
 ARQUIVO_SINAL = os.path.join(DIRETORIO_RESULTADOS, "sinal_controle_qos")
 ARQUIVO_LATENCIAS = os.path.join(DIRETORIO_RESULTADOS, "latencias_urllc.csv")
@@ -45,12 +61,17 @@ def configurar_prioridade():
 
 
 def enviar_sinal(acao):
+    """Escreve o comando de controle (ativar/desativar) no arquivo que
+    o orquestrador (experimento.py) fica observando."""
     with open(ARQUIVO_SINAL, "w") as arquivo:
         arquivo.write(acao + "\n")
     print("Sinal enviado: %s" % acao, flush=True)
 
 
 def avaliar_latencia(latencia_ms, estado_controle):
+    """Máquina de estados simples com histerese para evitar oscilação
+    (ligar/desligar o controle a cada medição isolada acima/abaixo do
+    limiar)."""
     if latencia_ms > LIMIAR_LATENCIA_MS:
         estado_controle["violacoes_consecutivas"] += 1
         estado_controle["normais_consecutivas"] = 0
@@ -99,10 +120,10 @@ def processar_conexao(soquete_cliente, endereco, estado_controle, latencias):
             resposta_base[Raw].load = dados[:8]
             conexao.send(resposta_base)
 
-            print("Latencia medida (Scapy otimizado): %.3f ms (de %s)" % (latencia_ms, endereco[0]), flush=True)
+            print("Latência medida: %.3f ms (de %s)" % (latencia_ms, endereco[0]), flush=True)
             avaliar_latencia(latencia_ms, estado_controle)
     except Exception as erro:
-        print("Erro na conexao: %s" % erro, flush=True)
+        print("Erro na conexão: %s" % erro, flush=True)
     finally:
         try:
             conexao.close()
@@ -112,7 +133,7 @@ def processar_conexao(soquete_cliente, endereco, estado_controle, latencias):
 
 def iniciar_servidor(endereco="0.0.0.0", porta=5000, duracao_segundos=60):
     configurar_prioridade()
-    print("Iniciando monitor/controlador uRLLC com Scapy/TCP otimizado em %s:%d" % (endereco, porta), flush=True)
+    print("Iniciando monitor/controlador uRLLC em %s:%d" % (endereco, porta), flush=True)
 
     if os.path.exists(ARQUIVO_SINAL):
         os.remove(ARQUIVO_SINAL)
@@ -122,7 +143,7 @@ def iniciar_servidor(endereco="0.0.0.0", porta=5000, duracao_segundos=60):
     servidor.setsockopt(socket.SOL_SOCKET, socket.SO_PRIORITY, 7)
     servidor.bind((endereco, porta))
     servidor.listen(5)
-    servidor.settimeout(1.0)
+    servidor.settimeout(1.0)  # permite checar o tempo total mesmo sem clientes
 
     estado_controle = {"ativo": False, "violacoes_consecutivas": 0, "normais_consecutivas": 0}
     latencias = []
@@ -139,13 +160,14 @@ def iniciar_servidor(endereco="0.0.0.0", porta=5000, duracao_segundos=60):
 
     servidor.close()
 
-    # Salva latencias one-way no arquivo principal usado pelo coletor de resultados
+    # As latências one-way salvas aqui são a fonte principal usada por
+    # analisar_resultados.py para gerar as estatísticas e os gráficos.
     with open(ARQUIVO_LATENCIAS, "w") as arquivo:
         arquivo.write("latencia_ms\n")
         for valor in latencias:
             arquivo.write("%.3f\n" % valor)
 
-    print("Monitor (Scapy otimizado) finalizado. %d medicoes salvas em %s" % (len(latencias), ARQUIVO_LATENCIAS), flush=True)
+    print("Monitor finalizado. %d medições salvas em %s" % (len(latencias), ARQUIVO_LATENCIAS), flush=True)
 
 
 if __name__ == "__main__":

@@ -1,4 +1,14 @@
 #!/usr/bin/env python3
+"""
+Gerador de tráfego eMBB (enhanced Mobile Broadband) usando iperf3.
+
+O eMBB representa o tráfego "concorrente" de alto volume (streaming,
+grandes transferências) que disputa banda com o uRLLC na mesma rede
+de transporte. Usamos iperf3 (em vez do iperf 2.x original) porque é
+o pacote disponível e mantido no apt do Ubuntu 22.04 usado na imagem
+Docker deste projeto -- a interface de linha de comando (-s/-c/-u/-b)
+é equivalente para o que precisamos aqui.
+"""
 
 import subprocess
 import sys
@@ -6,9 +16,9 @@ import time
 
 
 def iniciar_servidor(porta=5001):
-    print("Iniciando servidor iperf na porta %d" % porta)
+    print("Iniciando servidor iperf3 na porta %d" % porta)
     processo = subprocess.Popen(
-        ["iperf", "-s", "-p", str(porta)],
+        ["iperf3", "-s", "-p", str(porta)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE
     )
@@ -16,9 +26,9 @@ def iniciar_servidor(porta=5001):
 
 
 def executar_cliente(endereco_destino, porta=5001, duracao_segundos=30, taxa_bits="10M", protocolo="udp"):
-    print("Iniciando cliente iperf para %s:%d" % (endereco_destino, porta))
+    print("Iniciando cliente iperf3 para %s:%d (%s, %s)" % (endereco_destino, porta, taxa_bits, protocolo.upper()))
 
-    comando = ["iperf", "-c", endereco_destino, "-p", str(porta), "-t", str(duracao_segundos), "-b", taxa_bits]
+    comando = ["iperf3", "-c", endereco_destino, "-p", str(porta), "-t", str(duracao_segundos), "-b", taxa_bits]
     if protocolo == "udp":
         comando.append("-u")
 

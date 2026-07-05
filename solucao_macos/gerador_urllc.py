@@ -1,11 +1,18 @@
 #!/usr/bin/env python3
 """
-Gerador uRLLC otimizado com Scapy/TCP (StreamSocket sobre socket TCP puro).
+Gerador de tráfego uRLLC via Scapy/TCP (StreamSocket sobre socket TCP real).
 
-- Usa StreamSocket do Scapy, que envolve um socket TCP real.
-- Constroi pacote Scapy IP/TCP/Raw e envia via StreamSocket.
-- Aplica TCP_NODELAY, TCP_QUICKACK, SO_PRIORITY e ToS EF.
-- Configura prioridade de processo.
+Por que Scapy sobre um socket TCP "de verdade" (StreamSocket) em vez de
+pacotes crus injetados na interface? Porque o requisito do projeto pede
+pacotes TCP construídos com Scapy, mas o transporte real (handshake,
+retransmissão, controle de fluxo) precisa ser confiável para medir
+latência fim-a-fim de forma consistente. O StreamSocket do Scapy
+permite montar/inspecionar os pacotes com a API do Scapy (IP/TCP/Raw)
+enquanto usa um socket TCP conectado nos bastidores.
+
+Cada pacote carrega, no payload, o timestamp de envio (8 bytes,
+double). O lado que recebe (monitor_controlador.py) calcula a
+latência one-way comparando esse timestamp com o horário de chegada.
 """
 
 import os
@@ -16,17 +23,22 @@ import time
 
 from scapy.all import conf, IP, TCP, Raw, StreamSocket
 
-conf.verb = 0
+conf.verb = 0  # silencia os logs internos do Scapy
 
-DIRETORIO_PROJETO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DIRETORIO_RESULTADOS = os.path.join(DIRETORIO_PROJETO, "docs", "resultados")
-if not os.path.exists(DIRETORIO_RESULTADOS):
-    os.makedirs(DIRETORIO_RESULTADOS)
+# Resultados sempre relativos a este arquivo, não a um caminho fixo de
+# usuário/máquina -- assim o script roda igual dentro do container
+# Docker (ex.: /app) ou em qualquer outra pasta.
+DIRETORIO_PROJETO = os.path.dirname(os.path.abspath(__file__))
+DIRETORIO_RESULTADOS = os.path.join(DIRETORIO_PROJETO, "resultados")
+os.makedirs(DIRETORIO_RESULTADOS, exist_ok=True)
 
 ARQUIVO_LATENCIAS_RTT = os.path.join(DIRETORIO_RESULTADOS, "latencias_urllc_rtt.csv")
 
 
 def configurar_prioridade():
+    """Tenta elevar a prioridade do processo/agendamento para reduzir
+    jitter causado pelo escalonador do SO. Falha silenciosamente se o
+    container não tiver permissão (ex.: sem --privileged)."""
     try:
         os.nice(-20)
     except Exception:
@@ -39,6 +51,12 @@ def configurar_prioridade():
 
 
 def criar_conexao_scapy(endereco_destino, porta_destino):
+    """Abre um socket TCP normal e o envolve em um StreamSocket do Scapy.
+
+    TCP_NODELAY desativa o algoritmo de Nagle (que agruparia pacotes
+    pequenos, adicionando latência artificial). SO_PRIORITY marca o
+    pacote para as filas de QoS do Linux/OVS.
+    """
     soquete = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     soquete.settimeout(5.0)
     soquete.setsockopt(socket.SOL_SOCKET, socket.SO_PRIORITY, 7)
@@ -46,12 +64,16 @@ def criar_conexao_scapy(endereco_destino, porta_destino):
     try:
         soquete.setsockopt(socket.IPPROTO_TCP, socket.TCP_QUICKACK, 1)
     except (AttributeError, OSError):
-        pass
+        pass  # TCP_QUICKACK não existe fora do Linux
     soquete.connect((endereco_destino, porta_destino))
     return StreamSocket(soquete, Raw)
 
 
 def enviar_pacote_urllc(conexao, pacote_base):
+    """Envia um pacote uRLLC com o timestamp atual e aguarda o eco do
+    monitor para calcular a latência (RTT medido no próprio gerador,
+    usado apenas como referência cruzada da latência one-way do
+    monitor)."""
     timestamp_envio = time.time()
     payload = struct.pack("!d", timestamp_envio)
 
@@ -69,9 +91,11 @@ def enviar_pacote_urllc(conexao, pacote_base):
 
 def executar_gerador(endereco_destino, porta_destino, intervalo_segundos, duracao_segundos):
     configurar_prioridade()
-    print("Iniciando gerador uRLLC com Scapy/TCP (StreamSocket) para %s:%d" % (endereco_destino, porta_destino), flush=True)
+    print("Iniciando gerador uRLLC (Scapy/TCP) para %s:%d" % (endereco_destino, porta_destino), flush=True)
     latencias = []
     conexao = None
+    # ToS 0xB8 = DSCP EF (Expedited Forwarding), classe de prioridade
+    # máxima usada tipicamente para tráfego sensível à latência.
     pacote_base = IP(dst=endereco_destino, tos=0xB8) / TCP(dport=porta_destino) / Raw(load=b"\x00" * 8)
 
     tempo_inicio = time.time()
@@ -83,13 +107,13 @@ def executar_gerador(endereco_destino, porta_destino, intervalo_segundos, duraca
             latencia = enviar_pacote_urllc(conexao, pacote_base)
             if latencia is not None:
                 latencias.append(latencia)
-                print("Latencia uRLLC (Scapy StreamSocket): %.3f ms" % latencia, flush=True)
+                print("Latência uRLLC (RTT local): %.3f ms" % latencia, flush=True)
             else:
-                print("Falha ao medir latencia, reconectando", flush=True)
+                print("Falha ao medir latência, reconectando", flush=True)
                 conexao.close()
                 conexao = None
         except (socket.timeout, socket.error, BrokenPipeError, OSError) as erro:
-            print("Erro de conexao: %s, reconectando" % erro, flush=True)
+            print("Erro de conexão: %s, reconectando" % erro, flush=True)
             if conexao:
                 try:
                     conexao.close()
@@ -110,7 +134,7 @@ def executar_gerador(endereco_destino, porta_destino, intervalo_segundos, duraca
         for valor in latencias:
             arquivo.write("%.3f\n" % valor)
 
-    print("Gerador uRLLC (Scapy StreamSocket) finalizado. %d medicoes salvas em %s" % (len(latencias), ARQUIVO_LATENCIAS_RTT), flush=True)
+    print("Gerador uRLLC finalizado. %d medições salvas em %s" % (len(latencias), ARQUIVO_LATENCIAS_RTT), flush=True)
 
 
 if __name__ == "__main__":
