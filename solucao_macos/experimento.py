@@ -2,21 +2,32 @@
 """
 Orquestrador do experimento closed loop uRLLC x eMBB sobre 4 switches OVS.
 
+Cenário: rede de monitoramento de segurança/incêndio de um campus
+universitário. Três prédios (Biblioteca, Laboratórios, Reitoria) enviam
+simultaneamente, cada um pela sua própria conexão:
+
+- uRLLC: alertas de sensores de incêndio/fumaça (TCP porta 5000) para
+  a Central de Monitoramento (`h_central_urllc`).
+- eMBB: streaming das câmeras de vigilância (iperf3, uma porta por
+  prédio) para a Central de Vídeo (`h_central_video`).
+
 Fluxo de um experimento:
 
-1. Sobe a topologia (topologia.py).
+1. Sobe a topologia (topologia.py) com os 3 sites + a central.
 2. (Opcional) Ativa o controle QoS preventivamente, já descartando
    eMBB desde o início.
-3. Inicia o monitor/controlador no host de destino uRLLC
-   (monitor_controlador.py).
-4. Inicia o servidor + cliente iperf3 do eMBB (gerador_embb.py), a
+3. Inicia o monitor/controlador na Central (monitor_controlador.py),
+   que atende os 3 sensores concorrentemente.
+4. Inicia um servidor iperf3 por prédio na Central de Vídeo e o
+   respectivo cliente na câmera de cada prédio (gerador_embb.py), a
    menos que o experimento seja "uRLLC isolado" (--sem-embb).
-5. Inicia o gerador de tráfego uRLLC (gerador_urllc.py).
+5. Inicia o gerador de tráfego uRLLC em cada sensor (gerador_urllc.py).
 6. Fica observando o arquivo de sinal escrito pelo monitor e, quando
    necessário, instala/remove via OpenFlow a regra que derruba o
-   tráfego eMBB -- fechando o laço de controle (closed loop).
+   tráfego eMBB de todos os prédios -- fechando o laço de controle
+   (closed loop).
 7. Ao final, chama analisar_resultados.py para gerar estatísticas e
-   os gráficos usados no artigo.
+   os gráficos usados no artigo (latências agregadas dos 3 sites).
 
 Diferença em relação à versão Linux original: nenhum caminho fixo de
 usuário/máquina (ex.: /root/...). Tudo é resolvido a partir da pasta
@@ -34,7 +45,7 @@ import time
 DIRETORIO_PROJETO = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, DIRETORIO_PROJETO)
 
-from topologia import criar_topologia
+from topologia import criar_topologia, SITES, HOST_CENTRAL_URLLC, HOST_CENTRAL_VIDEO
 
 DIRETORIO_RESULTADOS = os.path.join(DIRETORIO_PROJETO, "resultados")
 os.makedirs(DIRETORIO_RESULTADOS, exist_ok=True)
@@ -42,6 +53,16 @@ os.makedirs(DIRETORIO_RESULTADOS, exist_ok=True)
 ARQUIVO_SINAL = os.path.join(DIRETORIO_RESULTADOS, "sinal_controle_qos")
 ARQUIVO_EVENTOS = os.path.join(DIRETORIO_RESULTADOS, "eventos_controle.txt")
 ARQUIVO_LATENCIAS = os.path.join(DIRETORIO_RESULTADOS, "latencias_urllc.csv")
+
+IP_CENTRAL_URLLC = HOST_CENTRAL_URLLC[1].split("/")[0]
+IP_CENTRAL_VIDEO = HOST_CENTRAL_VIDEO[1].split("/")[0]
+PORTA_URLLC = 5000
+
+# Uma porta eMBB dedicada por prédio (um servidor/cliente iperf3 por
+# porta), já que um mesmo servidor iperf3 não atende dois streams UDP
+# simultâneos na mesma porta -- é assim que os 3 prédios conseguem
+# transmitir vídeo para a central ao mesmo tempo.
+PORTAS_EMBB = {site["nome"]: 5001 + indice for indice, site in enumerate(SITES)}
 
 # Usa sempre o mesmo interpretador Python que executou este script
 # (o do venv/imagem Docker), em vez de um caminho fixo.
@@ -55,20 +76,23 @@ def registrar_evento(mensagem):
 
 def aplicar_controle_qos(rede, ativar):
     """Instala ou remove, via OpenFlow, a regra que descarta o tráfego
-    eMBB (UDP porta 5001). É a ação de atuação do closed loop sobre os
-    4 switches OVS que representam a rede de transporte."""
+    eMBB (uma porta UDP por prédio do campus, ver `PORTAS_EMBB`). É a
+    ação de atuação do closed loop sobre os 4 switches OVS que
+    representam a rede de transporte -- derruba o vídeo dos 3 sites de
+    uma vez para proteger os alertas de incêndio (uRLLC)."""
     acao = "ativar" if ativar else "desativar"
     print("*** Aplicando controle QoS (OpenFlow): %s ***" % acao)
     registrar_evento("controle_%s" % acao)
     ofctl = "ovs-ofctl -O OpenFlow13"
     for nome_switch in ["r1", "r2", "r3", "r4"]:
         switch = rede.getNodeByName(nome_switch)
-        if ativar:
-            switch.cmd("%s add-flow %s 'priority=110,udp,tp_dst=5001,actions=drop'" % (ofctl, nome_switch))
-            switch.cmd("%s add-flow %s 'priority=110,udp,tp_src=5001,actions=drop'" % (ofctl, nome_switch))
-        else:
-            switch.cmd("%s del-flows %s 'udp,tp_dst=5001'" % (ofctl, nome_switch))
-            switch.cmd("%s del-flows %s 'udp,tp_src=5001'" % (ofctl, nome_switch))
+        for porta_embb in PORTAS_EMBB.values():
+            if ativar:
+                switch.cmd("%s add-flow %s 'priority=110,udp,tp_dst=%d,actions=drop'" % (ofctl, nome_switch, porta_embb))
+                switch.cmd("%s add-flow %s 'priority=110,udp,tp_src=%d,actions=drop'" % (ofctl, nome_switch, porta_embb))
+            else:
+                switch.cmd("%s del-flows %s 'udp,tp_dst=%d'" % (ofctl, nome_switch, porta_embb))
+                switch.cmd("%s del-flows %s 'udp,tp_src=%d'" % (ofctl, nome_switch, porta_embb))
 
 
 class LeitorIncremental:
@@ -153,10 +177,8 @@ def executar_experimento(duracao_segundos, taxa_embb, tipo_embb, controle, sem_e
 
     rede = criar_topologia()
 
-    h_urllc_a = rede.getNodeByName("h_urllc_a")
-    h_urllc_b = rede.getNodeByName("h_urllc_b")
-    h_embb_a = rede.getNodeByName("h_embb_a")
-    h_embb_b = rede.getNodeByName("h_embb_b")
+    h_central_urllc = rede.getNodeByName(HOST_CENTRAL_URLLC[0])
+    h_central_video = rede.getNodeByName(HOST_CENTRAL_VIDEO[0])
 
     if controle == "preventivo":
         print("*** Ativando controle preventivo (drop de eMBB desde o início)")
@@ -164,50 +186,69 @@ def executar_experimento(duracao_segundos, taxa_embb, tipo_embb, controle, sem_e
 
     leitores = [LeitorIncremental("/tmp/log_monitor.txt", "monitor")]
 
-    print("*** Iniciando monitor/controlador em h_urllc_b")
-    h_urllc_b.cmd(
-        "%s %s 10.0.3.2 5000 %d > /tmp/log_monitor.txt 2>&1 &"
-        % (CAMINHO_PYTHON, os.path.join(DIRETORIO_PROJETO, "monitor_controlador.py"), duracao_segundos)
+    print("*** Iniciando monitor/controlador na Central de Monitoramento (%s)" % HOST_CENTRAL_URLLC[0])
+    h_central_urllc.cmd(
+        "%s %s %s %d %d > /tmp/log_monitor.txt 2>&1 &"
+        % (CAMINHO_PYTHON, os.path.join(DIRETORIO_PROJETO, "monitor_controlador.py"),
+           IP_CENTRAL_URLLC, PORTA_URLLC, duracao_segundos)
     )
-    time.sleep(3)  # dá tempo do monitor abrir o socket de escuta antes do gerador conectar
+    time.sleep(3)  # dá tempo do monitor abrir o socket de escuta antes dos geradores conectarem
 
-    processo_cliente_iperf = None
+    processos_cliente_iperf = []
     if not sem_embb:
-        print("*** Iniciando servidor iperf3 em h_embb_b")
-        h_embb_b.cmd(
-            "%s %s servidor > /tmp/log_servidor_iperf.txt 2>&1 &"
-            % (CAMINHO_PYTHON, os.path.join(DIRETORIO_PROJETO, "gerador_embb.py"))
-        )
+        for site in SITES:
+            porta_embb = PORTAS_EMBB[site["nome"]]
+            print("*** Iniciando servidor iperf3 em %s (porta %d, prédio %s)"
+                  % (HOST_CENTRAL_VIDEO[0], porta_embb, site["nome"]))
+            h_central_video.cmd(
+                "%s %s servidor %d > /tmp/log_servidor_iperf_%s.txt 2>&1 &"
+                % (CAMINHO_PYTHON, os.path.join(DIRETORIO_PROJETO, "gerador_embb.py"), porta_embb, site["nome"])
+            )
         time.sleep(2)
 
-        print("*** Iniciando gerador de tráfego eMBB em h_embb_a (%s %s)" % (taxa_embb, tipo_embb.upper()))
-        processo_cliente_iperf = h_embb_a.popen(
-            [CAMINHO_PYTHON, os.path.join(DIRETORIO_PROJETO, "gerador_embb.py"),
-             "cliente", "10.0.4.2", "5001", str(duracao_segundos), taxa_embb, tipo_embb],
-            stdout=open("/tmp/log_cliente_iperf.txt", "w"),
-            stderr=subprocess.STDOUT
-        )
-        leitores.append(LeitorIncremental("/tmp/log_cliente_iperf.txt", "embb"))
+        for site in SITES:
+            nome_camera = site["camera"][0]
+            porta_embb = PORTAS_EMBB[site["nome"]]
+            h_camera = rede.getNodeByName(nome_camera)
+            print("*** Iniciando câmera do prédio %s (%s -> %s:%d, %s %s)"
+                  % (site["nome"], nome_camera, IP_CENTRAL_VIDEO, porta_embb, taxa_embb, tipo_embb.upper()))
+            arquivo_log = "/tmp/log_cliente_iperf_%s.txt" % site["nome"]
+            processo = h_camera.popen(
+                [CAMINHO_PYTHON, os.path.join(DIRETORIO_PROJETO, "gerador_embb.py"),
+                 "cliente", IP_CENTRAL_VIDEO, str(porta_embb), str(duracao_segundos), taxa_embb, tipo_embb],
+                stdout=open(arquivo_log, "w"),
+                stderr=subprocess.STDOUT
+            )
+            leitores.append(LeitorIncremental(arquivo_log, "embb-%s" % site["nome"]))
+            processos_cliente_iperf.append(processo)
         time.sleep(3)
     else:
-        print("*** Experimento SEM eMBB (uRLLC isolado)")
+        print("*** Experimento SEM eMBB (uRLLC isolado, sem câmeras)")
         registrar_evento("sem_embb")
 
-    print("*** Iniciando gerador de tráfego uRLLC em h_urllc_a (intervalo %.1fs)" % intervalo_urllc)
-    processo_gerador_urllc = h_urllc_a.popen(
-        [CAMINHO_PYTHON, os.path.join(DIRETORIO_PROJETO, "gerador_urllc.py"),
-         "10.0.3.2", "5000", str(intervalo_urllc), str(duracao_segundos)],
-        stdout=open("/tmp/log_gerador_urllc.txt", "w"),
-        stderr=subprocess.STDOUT
-    )
-    leitores.append(LeitorIncremental("/tmp/log_gerador_urllc.txt", "urllc"))
+    processos_gerador_urllc = []
+    for site in SITES:
+        nome_sensor = site["sensor"][0]
+        h_sensor = rede.getNodeByName(nome_sensor)
+        print("*** Iniciando sensor de incêndio do prédio %s (%s, intervalo %.1fs)"
+              % (site["nome"], nome_sensor, intervalo_urllc))
+        arquivo_log = "/tmp/log_gerador_urllc_%s.txt" % site["nome"]
+        processo = h_sensor.popen(
+            [CAMINHO_PYTHON, os.path.join(DIRETORIO_PROJETO, "gerador_urllc.py"),
+             IP_CENTRAL_URLLC, str(PORTA_URLLC), str(intervalo_urllc), str(duracao_segundos)],
+            stdout=open(arquivo_log, "w"),
+            stderr=subprocess.STDOUT
+        )
+        leitores.append(LeitorIncremental(arquivo_log, "urllc-%s" % site["nome"]))
+        processos_gerador_urllc.append(processo)
 
     print("*** Experimento em execução por %d segundos (saída em tempo real abaixo) ***" % duracao_segundos)
     monitorar_sinal_e_atuar(rede, duracao_segundos, leitores)
 
-    processo_gerador_urllc.wait()
-    if processo_cliente_iperf is not None:
-        processo_cliente_iperf.wait()
+    for processo in processos_gerador_urllc:
+        processo.wait()
+    for processo in processos_cliente_iperf:
+        processo.wait()
     time.sleep(2)  # dá tempo do monitor gravar o CSV final antes de analisar
 
     partes_sufixo = []

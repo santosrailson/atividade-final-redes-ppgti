@@ -49,7 +49,8 @@ if __name__ == "__main__":
     modo = sys.argv[1] if len(sys.argv) > 1 else "cliente"
 
     if modo == "servidor":
-        servidor = iniciar_servidor()
+        porta_servidor = int(sys.argv[2]) if len(sys.argv) > 2 else 5001
+        servidor = iniciar_servidor(porta_servidor)
         try:
             while True:
                 time.sleep(1)

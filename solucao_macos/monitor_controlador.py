@@ -2,33 +2,43 @@
 """
 Monitor + controlador closed loop do tráfego uRLLC (Scapy/TCP).
 
-Este processo roda no host de destino (h_urllc_b) e cumpre dois papéis:
+Este processo roda no host da Central de Monitoramento do campus
+(h_central_urllc) e cumpre dois papéis:
 
-1. Monitor: recebe cada pacote uRLLC, calcula a latência one-way
+1. Monitor: recebe cada pacote uRLLC -- alertas de sensores de
+   incêndio/fumaça vindos de vários prédios do campus, cada um em sua
+   própria conexão TCP concorrente --, calcula a latência one-way
    (chegada - timestamp de envio embutido no payload) e devolve um eco
    ao gerador. Assume relógios sincronizados entre os hosts (dentro do
    mesmo container/VM Mininet, o relógio de sistema é compartilhado
    por todos os namespaces, então essa suposição é válida aqui).
 
 2. Controlador: aplica uma lógica de histerese sobre a latência
-   medida. Se a latência ultrapassa o limiar (5 ms) por
-   `JANELA_VIOLACOES` medições seguidas, escreve um sinal "ativar" em
-   um arquivo compartilhado. O processo orquestrador (experimento.py)
-   lê esse arquivo e instala, via OpenFlow, uma regra que descarta o
-   tráfego eMBB nos switches OVS -- protegendo o uRLLC. Quando a
-   latência volta ao normal por `AMOSTRAS_PARA_NORMALIZAR` medições
-   seguidas, o sinal "desativar" libera o eMBB de novo.
+   medida (agregada entre todos os sites). Se a latência ultrapassa o
+   limiar (5 ms) por `JANELA_VIOLACOES` medições seguidas, escreve um
+   sinal "ativar" em um arquivo compartilhado. O processo orquestrador
+   (experimento.py) lê esse arquivo e instala, via OpenFlow, uma regra
+   que descarta o tráfego eMBB nos switches OVS -- protegendo o
+   uRLLC. Quando a latência volta ao normal por
+   `AMOSTRAS_PARA_NORMALIZAR` medições seguidas, o sinal "desativar"
+   libera o eMBB de novo.
 
 A comunicação monitor -> orquestrador via arquivo (em vez de, por
 exemplo, uma fila em memória) é proposital: monitor e orquestrador
 são processos/hosts Mininet diferentes, então um arquivo em disco
 compartilhado é a forma mais simples de sinalizar entre eles.
+
+Como os sensores de vários prédios enviam alertas simultaneamente, o
+servidor aceita conexões concorrentes: cada conexão é atendida em uma
+thread própria, e o estado do controlador (contadores de violação,
+lista de latências) é compartilhado entre elas com um lock.
 """
 
 import os
 import socket
 import struct
 import sys
+import threading
 import time
 
 from scapy.all import conf, IP, TCP, Raw, StreamSocket
@@ -38,6 +48,21 @@ conf.verb = 0
 LIMIAR_LATENCIA_MS = 5.0      # requisito do projeto: uRLLC <= 5 ms fim-a-fim
 JANELA_VIOLACOES = 2          # violações consecutivas para ativar o controle
 AMOSTRAS_PARA_NORMALIZAR = 3  # medições normais consecutivas para desativar
+
+# Prefixo IP (/24) -> nome do site do campus, só para identificar a
+# origem do alerta nos logs em tempo real (não afeta a medição).
+MAPA_SITES = {
+    "10.0.11.": "Biblioteca",
+    "10.0.21.": "Laboratorios",
+    "10.0.31.": "Reitoria",
+}
+
+
+def nome_do_site(ip):
+    for prefixo, nome in MAPA_SITES.items():
+        if ip.startswith(prefixo):
+            return nome
+    return ip
 
 DIRETORIO_PROJETO = os.path.dirname(os.path.abspath(__file__))
 DIRETORIO_RESULTADOS = os.path.join(DIRETORIO_PROJETO, "resultados")
@@ -71,7 +96,9 @@ def enviar_sinal(acao):
 def avaliar_latencia(latencia_ms, estado_controle):
     """Máquina de estados simples com histerese para evitar oscilação
     (ligar/desligar o controle a cada medição isolada acima/abaixo do
-    limiar)."""
+    limiar). Chamada só sob `estado_controle["lock"]`, já que os
+    sensores dos vários prédios do campus reportam concorrentemente e
+    esse estado é compartilhado entre as threads."""
     if latencia_ms > LIMIAR_LATENCIA_MS:
         estado_controle["violacoes_consecutivas"] += 1
         estado_controle["normais_consecutivas"] = 0
@@ -87,6 +114,9 @@ def avaliar_latencia(latencia_ms, estado_controle):
 
 
 def processar_conexao(soquete_cliente, endereco, estado_controle, latencias):
+    """Atende, em sua própria thread, os alertas de um sensor. Roda em
+    paralelo com as threads dos outros prédios do campus, todas
+    compartilhando `estado_controle` e `latencias` sob o mesmo lock."""
     soquete_cliente.setsockopt(socket.SOL_SOCKET, socket.SO_PRIORITY, 7)
     soquete_cliente.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
     try:
@@ -95,6 +125,7 @@ def processar_conexao(soquete_cliente, endereco, estado_controle, latencias):
         pass
     conexao = StreamSocket(soquete_cliente, IP)
     resposta_base = IP(dst=endereco[0], tos=0xB8) / TCP(dport=5000) / Raw(load=b"\x00" * 8)
+    site = nome_do_site(endereco[0])
 
     try:
         while True:
@@ -115,15 +146,17 @@ def processar_conexao(soquete_cliente, endereco, estado_controle, latencias):
             timestamp_envio = struct.unpack("!d", dados[:8])[0]
             timestamp_recebimento = time.time()
             latencia_ms = (timestamp_recebimento - timestamp_envio) * 1000
-            latencias.append(latencia_ms)
 
             resposta_base[Raw].load = dados[:8]
             conexao.send(resposta_base)
 
-            print("Latência medida: %.3f ms (de %s)" % (latencia_ms, endereco[0]), flush=True)
-            avaliar_latencia(latencia_ms, estado_controle)
+            print("Latência medida: %.3f ms (de %s - %s)" % (latencia_ms, endereco[0], site), flush=True)
+
+            with estado_controle["lock"]:
+                latencias.append(latencia_ms)
+                avaliar_latencia(latencia_ms, estado_controle)
     except Exception as erro:
-        print("Erro na conexão: %s" % erro, flush=True)
+        print("Erro na conexão (%s): %s" % (site, erro), flush=True)
     finally:
         try:
             conexao.close()
@@ -133,7 +166,7 @@ def processar_conexao(soquete_cliente, endereco, estado_controle, latencias):
 
 def iniciar_servidor(endereco="0.0.0.0", porta=5000, duracao_segundos=60):
     configurar_prioridade()
-    print("Iniciando monitor/controlador uRLLC em %s:%d" % (endereco, porta), flush=True)
+    print("Iniciando monitor/controlador uRLLC em %s:%d (Central de Monitoramento do campus)" % (endereco, porta), flush=True)
 
     if os.path.exists(ARQUIVO_SINAL):
         os.remove(ARQUIVO_SINAL)
@@ -142,11 +175,17 @@ def iniciar_servidor(endereco="0.0.0.0", porta=5000, duracao_segundos=60):
     servidor.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     servidor.setsockopt(socket.SOL_SOCKET, socket.SO_PRIORITY, 7)
     servidor.bind((endereco, porta))
-    servidor.listen(5)
+    servidor.listen(len(MAPA_SITES) + 1)
     servidor.settimeout(1.0)  # permite checar o tempo total mesmo sem clientes
 
-    estado_controle = {"ativo": False, "violacoes_consecutivas": 0, "normais_consecutivas": 0}
+    estado_controle = {
+        "ativo": False,
+        "violacoes_consecutivas": 0,
+        "normais_consecutivas": 0,
+        "lock": threading.Lock(),
+    }
     latencias = []
+    threads_conexoes = []
     tempo_inicio = time.time()
 
     while time.time() - tempo_inicio < duracao_segundos:
@@ -156,7 +195,20 @@ def iniciar_servidor(endereco="0.0.0.0", porta=5000, duracao_segundos=60):
             continue
 
         soquete_cliente.settimeout(2.0)
-        processar_conexao(soquete_cliente, endereco_cliente, estado_controle, latencias)
+        # Cada prédio do campus mantém sua própria conexão TCP com a
+        # central; atender cada uma em uma thread permite medir os 3
+        # sites em paralelo, em vez de travar o accept() de novos
+        # sites enquanto um sensor já conectado continua enviando.
+        thread = threading.Thread(
+            target=processar_conexao,
+            args=(soquete_cliente, endereco_cliente, estado_controle, latencias),
+            daemon=True,
+        )
+        thread.start()
+        threads_conexoes.append(thread)
+
+    for thread in threads_conexoes:
+        thread.join(timeout=3.0)
 
     servidor.close()
 

@@ -2,12 +2,25 @@
 """
 Topologia da rede de transporte 5G emulada com Mininet + Open vSwitch.
 
-Representa os "4 roteadores da rede de transporte" pedidos no
-enunciado do projeto como 4 switches OVS em linha:
+Cenário: monitoramento de segurança/incêndio de um campus universitário.
+Três "ambientes" (prédios) do campus enviam tráfego uRLLC (alertas de
+sensores de incêndio/fumaça) e eMBB (streaming das câmeras de vigilância)
+através da rede de transporte (4 switches em linha) até uma Central de
+Monitoramento único, que representa o NOC (Network Operations Center) do
+campus:
 
-    h_urllc_a --\\                                    /-- h_urllc_b
-                 r1 ---- r2 ---- r3 ---- r4
-    h_embb_a  --/                                    \\-- h_embb_b
+    h_sensor_biblioteca --\\                                  /-- h_central_urllc
+    h_cam_biblioteca    --/-- r1                              |
+                                \\                             |
+    h_sensor_labs        --\\    r2 ---- r3 ---- r4 -----------|
+    h_cam_labs           --/---/                               |
+                                                                 \\
+    h_sensor_reitoria    --\\                                    \\-- h_central_video
+    h_cam_reitoria       --/-- r3 (acima)
+
+(cada prédio se conecta a um switch diferente da rede de transporte,
+simulando pontos de acesso distintos espalhados pelo campus; a central
+fica no switch mais distante, r4)
 
 Todos os hosts estão no mesmo domínio L2 (rede 10.0.0.0/16), então os
 switches funcionam como switches "normais" (aprendizado de MAC) e não
@@ -33,6 +46,40 @@ from mininet.node import OVSSwitch
 from mininet.link import TCLink
 from mininet.cli import CLI
 from mininet.log import setLogLevel, info
+
+# Cada site do campus tem um sensor uRLLC (alerta de incêndio/fumaça) e
+# uma câmera eMBB (vigilância), conectados ao switch indicado. IPs e
+# MACs seguem o padrão <bloco>.<host>, um bloco /24 por site dentro da
+# rede /16 compartilhada.
+#  Nomes de host curtos de propósito: o Linux limita nomes de interface
+#  a 15 caracteres (`<hostname>-ethN`), e "h_sensor_biblioteca-eth0"
+#  (24 caracteres) estoura esse limite.
+SITES = [
+    {
+        "nome": "biblioteca",
+        "switch": "r1",
+        "sensor": ("sens_bib", "10.0.11.1/16", "00:00:00:00:11:01"),
+        "camera": ("cam_bib", "10.0.12.1/16", "00:00:00:00:12:01"),
+    },
+    {
+        "nome": "labs",
+        "switch": "r2",
+        "sensor": ("sens_lab", "10.0.21.1/16", "00:00:00:00:21:01"),
+        "camera": ("cam_lab", "10.0.22.1/16", "00:00:00:00:22:01"),
+    },
+    {
+        "nome": "reitoria",
+        "switch": "r3",
+        "sensor": ("sens_rei", "10.0.31.1/16", "00:00:00:00:31:01"),
+        "camera": ("cam_rei", "10.0.32.1/16", "00:00:00:00:32:01"),
+    },
+]
+
+# Central de Monitoramento do campus (NOC), conectada ao switch mais
+# distante da linha (r4) -- recebe tanto os alertas uRLLC quanto os
+# streams de vídeo eMBB de todos os sites.
+HOST_CENTRAL_URLLC = ("c_urllc", "10.0.99.1/16", "00:00:00:00:99:01")
+HOST_CENTRAL_VIDEO = ("c_video", "10.0.99.2/16", "00:00:00:00:99:02")
 
 
 def configurar_interfaces_hosts(rede):
@@ -82,6 +129,10 @@ def configurar_ovs(switch):
 
     - TCP porta 5000 (uRLLC)      -> fila 1 (alta prioridade)
     - Qualquer outro tráfego       -> fila 0 (prioridade normal / eMBB)
+
+    Essas regras são as mesmas nos 4 switches, independente de qual
+    site (prédio do campus) estiver conectado a cada um -- a
+    priorização é por classe de tráfego (porta), não por origem.
     """
     info("*** Configurando OVS %s\n" % switch.name)
 
@@ -117,7 +168,7 @@ def limpar_ambiente():
     os.system("mn -c 2>/dev/null")
     for nome_bridge in ["r1", "r2", "r3", "r4"]:
         os.system("ovs-vsctl --if-exists del-br %s 2>/dev/null" % nome_bridge)
-    padrao_interfaces = "r[1-4]-eth|h_[a-z_]+-eth"
+    padrao_interfaces = "r[1-4]-eth|(sens|cam)_[a-z]+-eth|c_(urllc|video)-eth"
     try:
         saida = subprocess.check_output(
             "ip -o link show | awk -F': ' '{print $2}' | grep -E '^(%s)'" % padrao_interfaces,
@@ -132,30 +183,38 @@ def limpar_ambiente():
 
 
 def criar_topologia():
-    """Monta a topologia completa (hosts + 4 switches OVS) e devolve a rede pronta para uso."""
+    """Monta a topologia completa (hosts dos 3 sites do campus + central +
+    4 switches OVS) e devolve a rede pronta para uso."""
     limpar_ambiente()
     rede = Mininet(link=TCLink, switch=OVSSwitch)
 
-    info("*** Criando hosts\n")
-    host_urllc_a = rede.addHost("h_urllc_a", ip="10.0.1.1/16", mac="00:00:00:00:01:01")
-    host_embb_a  = rede.addHost("h_embb_a",  ip="10.0.2.1/16", mac="00:00:00:00:02:01")
-    host_urllc_b = rede.addHost("h_urllc_b", ip="10.0.3.2/16", mac="00:00:00:00:03:02")
-    host_embb_b  = rede.addHost("h_embb_b",  ip="10.0.4.2/16", mac="00:00:00:00:04:02")
-
     info("*** Criando switches OVS (4 roteadores da rede de transporte)\n")
-    r1 = rede.addSwitch("r1", cls=OVSSwitch, protocols="OpenFlow13", datapath="user")
-    r2 = rede.addSwitch("r2", cls=OVSSwitch, protocols="OpenFlow13", datapath="user")
-    r3 = rede.addSwitch("r3", cls=OVSSwitch, protocols="OpenFlow13", datapath="user")
-    r4 = rede.addSwitch("r4", cls=OVSSwitch, protocols="OpenFlow13", datapath="user")
+    switches = {}
+    for nome in ["r1", "r2", "r3", "r4"]:
+        switches[nome] = rede.addSwitch(nome, cls=OVSSwitch, protocols="OpenFlow13", datapath="user")
 
-    info("*** Criando links\n")
-    rede.addLink(host_urllc_a, r1, bw=100, delay="0ms")
-    rede.addLink(host_embb_a,  r1, bw=100, delay="0ms")
-    rede.addLink(r1, r2, bw=1000, delay="0ms")
-    rede.addLink(r2, r3, bw=1000, delay="0ms")
-    rede.addLink(r3, r4, bw=1000, delay="0ms")
-    rede.addLink(r4, host_urllc_b, bw=100, delay="0ms")
-    rede.addLink(r4, host_embb_b,  bw=100, delay="0ms")
+    info("*** Criando hosts dos sites do campus (sensor + câmera por prédio)\n")
+    for site in SITES:
+        nome_sensor, ip_sensor, mac_sensor = site["sensor"]
+        nome_camera, ip_camera, mac_camera = site["camera"]
+        host_sensor = rede.addHost(nome_sensor, ip=ip_sensor, mac=mac_sensor)
+        host_camera = rede.addHost(nome_camera, ip=ip_camera, mac=mac_camera)
+        switch_site = switches[site["switch"]]
+        rede.addLink(host_sensor, switch_site, bw=100, delay="0ms")
+        rede.addLink(host_camera, switch_site, bw=100, delay="0ms")
+
+    info("*** Criando host da Central de Monitoramento (NOC)\n")
+    nome_urllc, ip_urllc, mac_urllc = HOST_CENTRAL_URLLC
+    nome_video, ip_video, mac_video = HOST_CENTRAL_VIDEO
+    host_central_urllc = rede.addHost(nome_urllc, ip=ip_urllc, mac=mac_urllc)
+    host_central_video = rede.addHost(nome_video, ip=ip_video, mac=mac_video)
+    rede.addLink(host_central_urllc, switches["r4"], bw=100, delay="0ms")
+    rede.addLink(host_central_video, switches["r4"], bw=100, delay="0ms")
+
+    info("*** Criando backbone da rede de transporte (r1-r2-r3-r4)\n")
+    rede.addLink(switches["r1"], switches["r2"], bw=1000, delay="0ms")
+    rede.addLink(switches["r2"], switches["r3"], bw=1000, delay="0ms")
+    rede.addLink(switches["r3"], switches["r4"], bw=1000, delay="0ms")
 
     info("*** Iniciando rede\n")
     rede.start()
@@ -170,9 +229,12 @@ def criar_topologia():
 
 
 def testar_conectividade(rede):
-    info("*** Testando conectividade uRLLC (h_urllc_a -> h_urllc_b)\n")
-    resultado = rede.getNodeByName("h_urllc_a").cmd("ping -c 4 -4 10.0.3.2")
-    info(resultado)
+    ip_central = HOST_CENTRAL_URLLC[1].split("/")[0]
+    for site in SITES:
+        nome_sensor = site["sensor"][0]
+        info("*** Testando conectividade uRLLC (%s -> central)\n" % nome_sensor)
+        resultado = rede.getNodeByName(nome_sensor).cmd("ping -c 2 -4 %s" % ip_central)
+        info(resultado)
 
 
 if __name__ == "__main__":
