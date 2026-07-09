@@ -1,13 +1,14 @@
-# Resultados sao gerados pelos experimentos; nao versionar os
-# artefatos, apenas manter a pasta (via resultados/.gitkeep).
+# Resultados sao gerados pelos experimentos; nao versionar CSVs/logs
+# brutos (reproduziveis a qualquer momento rodando o experimento), mas
+# os graficos (.png) sao versionados para ilustrar o cenario no repo.
 resultados/*
 !resultados/.gitkeep
+!resultados/*.png
 
-# Material de apoio para escrever o artigo (enunciado + papers de
-# referencia). Nenhum script do projeto depende desses arquivos para
+# Material de apoio para escrever o artigo (papers de referencia de
+# terceiros). Nenhum script do projeto depende desses arquivos para
 # rodar; ficam apenas locais, fora do repositorio.
 artigos/
-PPGTI___RC___Projeto_Final.pdf
 
 __pycache__/
 *.pyc
