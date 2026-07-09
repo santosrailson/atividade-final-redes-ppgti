@@ -1,4 +1,4 @@
-# Sistema de Monitoramento e Controle Closed Loop uRLLC/eMBB — Versão macOS
+# Monitoramento e Prevenção de Incêndios via Rede 5G (uRLLC/eMBB) — UFPB, Campus III
 
 Projeto final da disciplina Redes de Computadores (PPGTI). Sistema de
 monitoramento e controle em malha fechada (*closed loop*) que garante que
@@ -12,7 +12,7 @@ O experimento simula uma rede de monitoramento de segurança/incêndio de um
 campus universitário com **três prédios** (Biblioteca, Bloco de
 Laboratórios e Reitoria), cada um equipado com:
 
-- um **sensor de incêndio/fumaça** (ex.: Arduino + sensor de chama/gás),
+- um **sensor de incêndio/fumaça** (ex.: ESP32 + sensor de chama/gás),
   que envia alertas críticos — tráfego **uRLLC** — e que precisa chegar à
   central em, no máximo, **5 ms**, pois um alarme atrasado é inútil;
 - uma **câmera de vigilância**, que faz streaming contínuo de vídeo para
