@@ -1,6 +1,6 @@
 # Monitoramento Closed Loop para Aplicações uRLLC em Rede 5G
 
-Projeto final da disciplina **Redes de Computadores — PPGTI/UFPB**. O
+Projeto final da disciplina **Redes de Computadores — PPGTI/IFPB**. O
 repositório implementa e avalia um sistema de monitoramento e controle em
 malha fechada para proteger aplicações uRLLC com requisito de latência
 one-way de até **5 ms**, mesmo quando coexistem com tráfego eMBB de alto
@@ -12,8 +12,10 @@ volume.
 
 ## Cenário
 
-O laboratório representa um campus com três locais — Biblioteca,
-Laboratórios e Reitoria — conectados a uma Central de Monitoramento:
+O laboratório representa, como estudo de caso, um cenário de monitoramento
+em outra instituição, a **UFPB**. O campus simulado possui três locais —
+Biblioteca, Laboratórios e Reitoria — conectados a uma Central de
+Monitoramento:
 
 - sensores de incêndio geram tráfego **uRLLC TCP** com Scapy;
 - câmeras geram tráfego **eMBB UDP/TCP** com iperf3;

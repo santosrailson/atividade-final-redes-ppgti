@@ -2,7 +2,7 @@
 """
 Topologia da rede de transporte 5G emulada com Mininet + Open vSwitch.
 
-Cenário: monitoramento de segurança/incêndio de um campus universitário.
+Cenário: monitoramento de segurança/incêndio em um campus simulado da UFPB.
 Três "ambientes" (prédios) do campus enviam tráfego uRLLC (alertas de
 sensores de incêndio/fumaça) e eMBB (streaming das câmeras de vigilância)
 através da rede de transporte (4 switches em linha) até uma Central de
