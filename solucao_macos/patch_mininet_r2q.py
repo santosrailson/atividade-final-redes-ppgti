@@ -9,7 +9,7 @@ O Mininet cria a fila HTB usada para limitar a banda de cada link
 mininet/link.py (classe TCIntf, metodo config). O quantum de uma
 classe HTB e calculado como taxa_em_bytes/r2q quando nenhum "quantum"
 explicito e informado; com r2q=10 e as taxas usadas neste projeto
-(100 Mbit nos links de acesso, 1000 Mbit no tronco), o quantum
+(100 Mbit nos links de acesso, 20 Mbit no tronco), o quantum
 calculado ultrapassa o teto interno do kernel (~60000 bytes) e gera o
 aviso -- que nao afeta o funcionamento (a fila continua limitando a
 taxa corretamente), so avisa que o quantum ficou maior que o ideal.
@@ -30,7 +30,7 @@ import sys
 
 CAMINHO = "/usr/lib/python3/dist-packages/mininet/link.py"
 ANTIGO = "root handle 5:0 htb default 1',"
-NOVO = "root handle 5:0 htb default 1 r2q 4000',"
+NOVO = "root handle 5:0 htb default 1 r2q 400',"
 
 with open(CAMINHO, "r") as arquivo:
     conteudo = arquivo.read()
@@ -48,4 +48,4 @@ conteudo = conteudo.replace(ANTIGO, NOVO)
 with open(CAMINHO, "w") as arquivo:
     arquivo.write(conteudo)
 
-print("mininet/link.py corrigido: r2q do HTB de banda aumentado para 4000.")
+print("mininet/link.py corrigido: r2q do HTB de banda ajustado para 400.")

@@ -1,0 +1,422 @@
+*** Iniciando monitor/controlador na Central de Monitoramento (c_urllc)
+*** Iniciando servidor iperf3 em c_video (porta 5001, prédio biblioteca)
+*** Iniciando servidor iperf3 em c_video (porta 5002, prédio labs)
+*** Iniciando servidor iperf3 em c_video (porta 5003, prédio reitoria)
+*** Iniciando câmera do prédio biblioteca (cam_bib -> 10.0.99.2:5001, 12M UDP)
+*** Iniciando câmera do prédio labs (cam_lab -> 10.0.99.2:5002, 12M UDP)
+*** Iniciando câmera do prédio reitoria (cam_rei -> 10.0.99.2:5003, 12M UDP)
+*** Iniciando sensor de incêndio do prédio biblioteca (sens_bib, intervalo 0.1s)
+*** Iniciando sensor de incêndio do prédio labs (sens_lab, intervalo 0.1s)
+*** Iniciando sensor de incêndio do prédio reitoria (sens_rei, intervalo 0.1s)
+*** Experimento em execução por 60 segundos (saída em tempo real abaixo) ***
+[monitor] Iniciando monitor/controlador uRLLC em 10.0.99.1:5000 (Central de Monitoramento do campus)
+[urllc-biblioteca] Iniciando gerador uRLLC (Scapy/TCP) para 10.0.99.1:5000
+[urllc-labs] Iniciando gerador uRLLC (Scapy/TCP) para 10.0.99.1:5000
+[urllc-reitoria] Iniciando gerador uRLLC (Scapy/TCP) para 10.0.99.1:5000
+*** Aplicando controle QoS (OpenFlow): ativar ***
+[monitor] Latência medida: 586.459 ms (de 10.0.21.1 - Laboratorios, seq=0)
+[monitor] Latência medida: 587.307 ms (de 10.0.11.1 - Biblioteca, seq=0)
+[monitor] Sinal enviado: ativar
+[urllc-biblioteca] Latência uRLLC (RTT local): 588.549 ms
+[urllc-reitoria] Erro de conexão: timed out, reconectando
+--- decorridos 5/60s ---
+[urllc-labs] Erro de conexão: timed out, reconectando
+[urllc-biblioteca] Erro de conexão: timed out, reconectando
+[urllc-reitoria] Erro de conexão: timed out, reconectando
+--- decorridos 10/60s ---
+[urllc-labs] Erro de conexão: timed out, reconectando
+[urllc-biblioteca] Erro de conexão: timed out, reconectando
+[urllc-reitoria] Erro de conexão: timed out, reconectando
+--- decorridos 15/60s ---
+[urllc-labs] Erro de conexão: timed out, reconectando
+[urllc-biblioteca] Erro de conexão: timed out, reconectando
+[urllc-reitoria] Erro de conexão: timed out, reconectando
+--- decorridos 20/60s ---
+[urllc-labs] Erro de conexão: timed out, reconectando
+[urllc-biblioteca] Erro de conexão: timed out, reconectando
+[urllc-reitoria] Erro de conexão: timed out, reconectando
+--- decorridos 25/60s ---
+[urllc-labs] Erro de conexão: timed out, reconectando
+[urllc-biblioteca] Erro de conexão: timed out, reconectando
+[urllc-reitoria] Erro de conexão: timed out, reconectando
+--- decorridos 30/60s ---
+[urllc-labs] Erro de conexão: timed out, reconectando
+[urllc-biblioteca] Erro de conexão: timed out, reconectando
+[urllc-reitoria] Erro de conexão: timed out, reconectando
+--- decorridos 35/60s ---
+[urllc-labs] Erro de conexão: timed out, reconectando
+[urllc-biblioteca] Erro de conexão: timed out, reconectando
+[urllc-reitoria] Erro de conexão: timed out, reconectando
+--- decorridos 41/60s ---
+[urllc-labs] Erro de conexão: timed out, reconectando
+[urllc-biblioteca] Erro de conexão: timed out, reconectando
+[urllc-reitoria] Erro de conexão: timed out, reconectando
+--- decorridos 46/60s ---
+[urllc-labs] Erro de conexão: timed out, reconectando
+[urllc-biblioteca] Erro de conexão: timed out, reconectando
+[urllc-reitoria] Erro de conexão: timed out, reconectando
+--- decorridos 51/60s ---
+[urllc-labs] Erro de conexão: timed out, reconectando
+[urllc-biblioteca] Erro de conexão: timed out, reconectando
+[urllc-reitoria] Erro de conexão: timed out, reconectando
+--- decorridos 56/60s ---
+*** Aplicando controle QoS (OpenFlow): desativar ***
+[monitor] Latência medida: 2.333 ms (de 10.0.31.1 - Reitoria, seq=0)
+[monitor] Latência medida: 2.805 ms (de 10.0.21.1 - Laboratorios, seq=0)
+[monitor] Latência medida: 0.344 ms (de 10.0.21.1 - Laboratorios, seq=1)
+[monitor] Latência medida: 0.233 ms (de 10.0.31.1 - Reitoria, seq=1)
+[monitor] Sinal enviado: desativar
+[monitor] Latência medida: 0.293 ms (de 10.0.31.1 - Reitoria, seq=2)
+[monitor] Latência medida: 0.446 ms (de 10.0.21.1 - Laboratorios, seq=2)
+[embb-biblioteca] Iniciando cliente iperf3 para 10.0.99.2:5001 (12M, UDP)
+[embb-biblioteca] Connecting to host 10.0.99.2, port 5001
+[embb-biblioteca] [  5] local 10.0.12.1 port 33791 connected to 10.0.99.2 port 5001
+[embb-biblioteca] [ ID] Interval           Transfer     Bitrate         Total Datagrams
+[embb-biblioteca] [  5]   0.00-1.00   sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]   1.00-2.00   sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]   2.00-3.00   sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]   3.00-4.00   sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]   4.00-5.00   sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]   5.00-6.00   sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]   6.00-7.00   sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]   7.00-8.00   sec  1.43 MBytes  12.0 Mbits/sec  1035
+[embb-biblioteca] [  5]   8.00-9.00   sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]   9.00-10.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]  10.00-11.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]  11.00-12.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]  12.00-13.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]  13.00-14.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]  14.00-15.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]  15.00-16.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]  16.00-17.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]  17.00-18.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]  18.00-19.00  sec  1.43 MBytes  12.0 Mbits/sec  1035
+[embb-biblioteca] [  5]  19.00-20.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]  20.00-21.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]  21.00-22.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]  22.00-23.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]  23.00-24.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]  24.00-25.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]  25.00-26.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]  26.00-27.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]  27.00-28.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]  28.00-29.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]  29.00-30.00  sec  1.43 MBytes  12.0 Mbits/sec  1035
+[embb-biblioteca] [  5]  30.00-31.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]  31.00-32.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]  32.00-33.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]  33.00-34.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]  34.00-35.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]  35.00-36.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]  36.00-37.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]  37.00-38.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]  38.00-39.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]  39.00-40.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]  40.00-41.00  sec  1.43 MBytes  12.0 Mbits/sec  1035
+[embb-biblioteca] [  5]  41.00-42.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]  42.00-43.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]  43.00-44.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]  44.00-45.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]  45.00-46.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]  46.00-47.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]  47.00-48.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]  48.00-49.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]  49.00-50.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]  50.00-51.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]  51.00-52.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]  52.00-53.00  sec  1.43 MBytes  12.0 Mbits/sec  1035
+[embb-biblioteca] [  5]  53.00-54.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]  54.00-55.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]  55.00-56.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]  56.00-57.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]  57.00-58.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]  58.00-59.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] [  5]  59.00-60.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-biblioteca] - - - - - - - - - - - - - - - - - - - - - - - - -
+[embb-biblioteca] [ ID] Interval           Transfer     Bitrate         Jitter    Lost/Total Datagrams
+[embb-biblioteca] [  5]   0.00-60.00  sec  85.8 MBytes  12.0 Mbits/sec  0.000 ms  0/62155 (0%)  sender
+[embb-biblioteca] [  5]   0.00-60.60  sec  1.56 MBytes   215 Kbits/sec  6.296 ms  60896/62023 (98%)  receiver
+[embb-biblioteca] iperf Done.
+[embb-labs] Iniciando cliente iperf3 para 10.0.99.2:5002 (12M, UDP)
+[embb-labs] Connecting to host 10.0.99.2, port 5002
+[embb-labs] [  5] local 10.0.22.1 port 36123 connected to 10.0.99.2 port 5002
+[embb-labs] [ ID] Interval           Transfer     Bitrate         Total Datagrams
+[embb-labs] [  5]   0.00-1.00   sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]   1.00-2.00   sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]   2.00-3.00   sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]   3.00-4.00   sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]   4.00-5.00   sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]   5.00-6.00   sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]   6.00-7.00   sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]   7.00-8.00   sec  1.43 MBytes  12.0 Mbits/sec  1035
+[embb-labs] [  5]   8.00-9.00   sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]   9.00-10.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]  10.00-11.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]  11.00-12.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]  12.00-13.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]  13.00-14.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]  14.00-15.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]  15.00-16.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]  16.00-17.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]  17.00-18.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]  18.00-19.00  sec  1.43 MBytes  12.0 Mbits/sec  1035
+[embb-labs] [  5]  19.00-20.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]  20.00-21.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]  21.00-22.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]  22.00-23.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]  23.00-24.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]  24.00-25.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]  25.00-26.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]  26.00-27.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]  27.00-28.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]  28.00-29.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]  29.00-30.00  sec  1.43 MBytes  12.0 Mbits/sec  1035
+[embb-labs] [  5]  30.00-31.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]  31.00-32.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]  32.00-33.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]  33.00-34.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]  34.00-35.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]  35.00-36.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]  36.00-37.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]  37.00-38.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]  38.00-39.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]  39.00-40.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]  40.00-41.00  sec  1.43 MBytes  12.0 Mbits/sec  1035
+[embb-labs] [  5]  41.00-42.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]  42.00-43.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]  43.00-44.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]  44.00-45.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]  45.00-46.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]  46.00-47.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]  47.00-48.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]  48.00-49.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]  49.00-50.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]  50.00-51.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]  51.00-52.00  sec  1.43 MBytes  12.0 Mbits/sec  1035
+[embb-labs] [  5]  52.00-53.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]  53.00-54.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]  54.00-55.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]  55.00-56.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]  56.00-57.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]  57.00-58.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]  58.00-59.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] [  5]  59.00-60.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-labs] - - - - - - - - - - - - - - - - - - - - - - - - -
+[embb-labs] [ ID] Interval           Transfer     Bitrate         Jitter    Lost/Total Datagrams
+[embb-labs] [  5]   0.00-60.00  sec  85.8 MBytes  12.0 Mbits/sec  0.000 ms  0/62155 (0%)  sender
+[embb-labs] [  5]   0.00-60.60  sec  4.15 MBytes   574 Kbits/sec  1.620 ms  58996/61998 (95%)  receiver
+[embb-labs] iperf Done.
+[embb-reitoria] Iniciando cliente iperf3 para 10.0.99.2:5003 (12M, UDP)
+[embb-reitoria] Connecting to host 10.0.99.2, port 5003
+[embb-reitoria] [  5] local 10.0.32.1 port 41913 connected to 10.0.99.2 port 5003
+[embb-reitoria] [ ID] Interval           Transfer     Bitrate         Total Datagrams
+[embb-reitoria] [  5]   0.00-1.00   sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]   1.00-2.00   sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]   2.00-3.00   sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]   3.00-4.00   sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]   4.00-5.00   sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]   5.00-6.00   sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]   6.00-7.00   sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]   7.00-8.00   sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]   8.00-9.00   sec  1.43 MBytes  12.0 Mbits/sec  1035
+[embb-reitoria] [  5]   9.00-10.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]  10.00-11.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]  11.00-12.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]  12.00-13.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]  13.00-14.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]  14.00-15.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]  15.00-16.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]  16.00-17.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]  17.00-18.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]  18.00-19.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]  19.00-20.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]  20.00-21.00  sec  1.43 MBytes  12.0 Mbits/sec  1035
+[embb-reitoria] [  5]  21.00-22.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]  22.00-23.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]  23.00-24.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]  24.00-25.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]  25.00-26.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]  26.00-27.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]  27.00-28.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]  28.00-29.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]  29.00-30.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]  30.00-31.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]  31.00-32.00  sec  1.43 MBytes  12.0 Mbits/sec  1035
+[embb-reitoria] [  5]  32.00-33.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]  33.00-34.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]  34.00-35.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]  35.00-36.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]  36.00-37.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]  37.00-38.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]  38.00-39.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]  39.00-40.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]  40.00-41.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]  41.00-42.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]  42.00-43.00  sec  1.43 MBytes  12.0 Mbits/sec  1035
+[embb-reitoria] [  5]  43.00-44.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]  44.00-45.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]  45.00-46.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]  46.00-47.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]  47.00-48.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]  48.00-49.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]  49.00-50.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]  50.00-51.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]  51.00-52.00  sec  1.43 MBytes  12.0 Mbits/sec  1035
+[embb-reitoria] [  5]  52.00-53.00  sec  1.43 MBytes  12.0 Mbits/sec  1037
+[embb-reitoria] [  5]  53.00-54.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]  54.00-55.00  sec  1.43 MBytes  12.0 Mbits/sec  1035
+[embb-reitoria] [  5]  55.00-56.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]  56.00-57.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]  57.00-58.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]  58.00-59.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] [  5]  59.00-60.00  sec  1.43 MBytes  12.0 Mbits/sec  1036
+[embb-reitoria] - - - - - - - - - - - - - - - - - - - - - - - - -
+[embb-reitoria] [ ID] Interval           Transfer     Bitrate         Jitter    Lost/Total Datagrams
+[embb-reitoria] [  5]   0.00-60.00  sec  85.8 MBytes  12.0 Mbits/sec  0.000 ms  0/62155 (0%)  sender
+[embb-reitoria] [  5]   0.00-60.60  sec  11.2 MBytes  1.55 Mbits/sec  1.044 ms  54037/62153 (87%)  receiver
+[embb-reitoria] iperf Done.
+[urllc-labs] Latência uRLLC (RTT local): 3.073 ms
+[urllc-labs] Latência uRLLC (RTT local): 0.620 ms
+[urllc-labs] Latência uRLLC (RTT local): 0.709 ms
+[urllc-reitoria] Latência uRLLC (RTT local): 2.620 ms
+[urllc-reitoria] Latência uRLLC (RTT local): 0.492 ms
+[urllc-reitoria] Latência uRLLC (RTT local): 0.668 ms
+[monitor] Latência medida: 0.363 ms (de 10.0.31.1 - Reitoria, seq=3)
+[monitor] Latência medida: 0.506 ms (de 10.0.21.1 - Laboratorios, seq=3)
+[monitor] Latência medida: 0.444 ms (de 10.0.11.1 - Biblioteca, seq=1)
+[monitor] Latência medida: 0.312 ms (de 10.0.31.1 - Reitoria, seq=4)
+[monitor] Latência medida: 0.502 ms (de 10.0.21.1 - Laboratorios, seq=4)
+[urllc-biblioteca] Latência uRLLC (RTT local): 0.913 ms
+[urllc-labs] Latência uRLLC (RTT local): 0.800 ms
+[urllc-labs] Latência uRLLC (RTT local): 1.139 ms
+[urllc-reitoria] Latência uRLLC (RTT local): 0.675 ms
+[urllc-reitoria] Latência uRLLC (RTT local): 0.807 ms
+[monitor] Latência medida: 1.712 ms (de 10.0.11.1 - Biblioteca, seq=2)
+[monitor] Latência medida: 1.131 ms (de 10.0.31.1 - Reitoria, seq=5)
+[monitor] Latência medida: 0.806 ms (de 10.0.21.1 - Laboratorios, seq=5)
+[monitor] Latência medida: 2.102 ms (de 10.0.11.1 - Biblioteca, seq=3)
+[monitor] Latência medida: 1.126 ms (de 10.0.31.1 - Reitoria, seq=6)
+[monitor] Latência medida: 0.887 ms (de 10.0.21.1 - Laboratorios, seq=6)
+[urllc-biblioteca] Latência uRLLC (RTT local): 3.407 ms
+[urllc-biblioteca] Latência uRLLC (RTT local): 3.482 ms
+[urllc-labs] Latência uRLLC (RTT local): 1.611 ms
+[urllc-labs] Latência uRLLC (RTT local): 1.802 ms
+[urllc-reitoria] Latência uRLLC (RTT local): 2.056 ms
+[urllc-reitoria] Latência uRLLC (RTT local): 2.020 ms
+[monitor] Latência medida: 1.463 ms (de 10.0.21.1 - Laboratorios, seq=7)
+[monitor] Latência medida: 1.865 ms (de 10.0.11.1 - Biblioteca, seq=4)
+[monitor] Latência medida: 0.983 ms (de 10.0.31.1 - Reitoria, seq=7)
+[monitor] Latência medida: 1.194 ms (de 10.0.31.1 - Reitoria, seq=8)
+[monitor] Latência medida: 1.519 ms (de 10.0.21.1 - Laboratorios, seq=8)
+[monitor] Latência medida: 0.736 ms (de 10.0.11.1 - Biblioteca, seq=5)
+[urllc-biblioteca] Latência uRLLC (RTT local): 2.679 ms
+[urllc-biblioteca] Latência uRLLC (RTT local): 1.397 ms
+[urllc-labs] Latência uRLLC (RTT local): 2.349 ms
+[urllc-labs] Latência uRLLC (RTT local): 2.326 ms
+[urllc-reitoria] Latência uRLLC (RTT local): 1.615 ms
+[urllc-reitoria] Latência uRLLC (RTT local): 1.990 ms
+[monitor] Latência medida: 1.577 ms (de 10.0.21.1 - Laboratorios, seq=9)
+[monitor] Latência medida: 1.066 ms (de 10.0.31.1 - Reitoria, seq=9)
+[monitor] Latência medida: 1.209 ms (de 10.0.11.1 - Biblioteca, seq=6)
+[monitor] Latência medida: 1.343 ms (de 10.0.21.1 - Laboratorios, seq=10)
+[monitor] Latência medida: 0.891 ms (de 10.0.31.1 - Reitoria, seq=10)
+[monitor] Latência medida: 0.938 ms (de 10.0.11.1 - Biblioteca, seq=7)
+[urllc-biblioteca] Latência uRLLC (RTT local): 2.107 ms
+[urllc-biblioteca] Latência uRLLC (RTT local): 1.704 ms
+[urllc-labs] Latência uRLLC (RTT local): 2.663 ms
+[urllc-labs] Latência uRLLC (RTT local): 2.468 ms
+[urllc-reitoria] Latência uRLLC (RTT local): 1.778 ms
+[urllc-reitoria] Latência uRLLC (RTT local): 1.793 ms
+[monitor] Latência medida: 1.337 ms (de 10.0.21.1 - Laboratorios, seq=11)
+[monitor] Latência medida: 0.818 ms (de 10.0.31.1 - Reitoria, seq=11)
+[monitor] Latência medida: 0.849 ms (de 10.0.11.1 - Biblioteca, seq=8)
+[monitor] Latência medida: 2.372 ms (de 10.0.21.1 - Laboratorios, seq=12)
+[monitor] Latência medida: 1.335 ms (de 10.0.31.1 - Reitoria, seq=12)
+[monitor] Latência medida: 0.896 ms (de 10.0.11.1 - Biblioteca, seq=9)
+[urllc-biblioteca] Latência uRLLC (RTT local): 1.427 ms
+[urllc-biblioteca] Latência uRLLC (RTT local): 1.687 ms
+[urllc-labs] Latência uRLLC (RTT local): 2.421 ms
+[urllc-labs] Latência uRLLC (RTT local): 3.518 ms
+[urllc-reitoria] Latência uRLLC (RTT local): 1.499 ms
+[urllc-reitoria] Latência uRLLC (RTT local): 2.155 ms
+[monitor] Latência medida: 1.448 ms (de 10.0.21.1 - Laboratorios, seq=13)
+[monitor] Latência medida: 2.561 ms (de 10.0.31.1 - Reitoria, seq=13)
+[monitor] Latência medida: 0.991 ms (de 10.0.11.1 - Biblioteca, seq=10)
+[monitor] Latência medida: 1.539 ms (de 10.0.21.1 - Laboratorios, seq=14)
+[monitor] Latência medida: 1.484 ms (de 10.0.31.1 - Reitoria, seq=14)
+[monitor] Latência medida: 0.919 ms (de 10.0.11.1 - Biblioteca, seq=11)
+[urllc-biblioteca] Latência uRLLC (RTT local): 1.913 ms
+[urllc-biblioteca] Latência uRLLC (RTT local): 1.517 ms
+[urllc-labs] Latência uRLLC (RTT local): 3.554 ms
+[urllc-labs] Latência uRLLC (RTT local): 2.841 ms
+[urllc-reitoria] Latência uRLLC (RTT local): 3.939 ms
+[urllc-reitoria] Latência uRLLC (RTT local): 2.394 ms
+[monitor] Latência medida: 1.714 ms (de 10.0.21.1 - Laboratorios, seq=15)
+[monitor] Latência medida: 1.306 ms (de 10.0.31.1 - Reitoria, seq=15)
+[monitor] Latência medida: 0.779 ms (de 10.0.11.1 - Biblioteca, seq=12)
+[monitor] Latência medida: 0.451 ms (de 10.0.31.1 - Reitoria, seq=16)
+[monitor] Latência medida: 0.264 ms (de 10.0.21.1 - Laboratorios, seq=16)
+[monitor] Latência medida: 0.362 ms (de 10.0.11.1 - Biblioteca, seq=13)
+[urllc-biblioteca] Latência uRLLC (RTT local): 2.094 ms
+[urllc-biblioteca] Latência uRLLC (RTT local): 0.592 ms
+[urllc-labs] Latência uRLLC (RTT local): 2.534 ms
+[urllc-labs] Latência uRLLC (RTT local): 0.518 ms
+[urllc-reitoria] Latência uRLLC (RTT local): 2.189 ms
+[urllc-reitoria] Latência uRLLC (RTT local): 0.755 ms
+[monitor] Latência medida: 0.731 ms (de 10.0.11.1 - Biblioteca, seq=14)
+[monitor] Latência medida: 0.493 ms (de 10.0.21.1 - Laboratorios, seq=17)
+[monitor] Latência medida: 0.376 ms (de 10.0.31.1 - Reitoria, seq=17)
+[monitor] Latência medida: 1.310 ms (de 10.0.21.1 - Laboratorios, seq=18)
+[monitor] Latência medida: 1.252 ms (de 10.0.11.1 - Biblioteca, seq=15)
+[monitor] Latência medida: 1.022 ms (de 10.0.31.1 - Reitoria, seq=18)
+[urllc-biblioteca] Latência uRLLC (RTT local): 1.296 ms
+[urllc-biblioteca] Latência uRLLC (RTT local): 2.091 ms
+[urllc-labs] Latência uRLLC (RTT local): 1.156 ms
+[urllc-labs] Latência uRLLC (RTT local): 2.489 ms
+[urllc-reitoria] Latência uRLLC (RTT local): 0.761 ms
+[urllc-reitoria] Latência uRLLC (RTT local): 1.779 ms
+[monitor] Latência medida: 1.641 ms (de 10.0.11.1 - Biblioteca, seq=16)
+[monitor] Latência medida: 0.784 ms (de 10.0.21.1 - Laboratorios, seq=19)
+[monitor] Latência medida: 0.752 ms (de 10.0.31.1 - Reitoria, seq=19)
+[monitor] Latência medida: 2.081 ms (de 10.0.21.1 - Laboratorios, seq=20)
+[monitor] Latência medida: 0.904 ms (de 10.0.11.1 - Biblioteca, seq=17)
+[monitor] Latência medida: 0.438 ms (de 10.0.31.1 - Reitoria, seq=20)
+[urllc-biblioteca] Latência uRLLC (RTT local): 2.635 ms
+[urllc-biblioteca] Latência uRLLC (RTT local): 1.690 ms
+[urllc-labs] Latência uRLLC (RTT local): 1.821 ms
+[urllc-labs] Latência uRLLC (RTT local): 3.257 ms
+[urllc-reitoria] Latência uRLLC (RTT local): 1.328 ms
+[urllc-reitoria] Latência uRLLC (RTT local): 1.121 ms
+[monitor] Latência medida: 1.647 ms (de 10.0.31.1 - Reitoria, seq=21)
+[monitor] Latência medida: 1.862 ms (de 10.0.11.1 - Biblioteca, seq=18)
+[monitor] Latência medida: 0.817 ms (de 10.0.21.1 - Laboratorios, seq=21)
+[monitor] Latência medida: 2.116 ms (de 10.0.21.1 - Laboratorios, seq=22)
+[monitor] Latência medida: 1.683 ms (de 10.0.31.1 - Reitoria, seq=22)
+[monitor] Latência medida: 2.036 ms (de 10.0.11.1 - Biblioteca, seq=19)
+[urllc-biblioteca] Latência uRLLC (RTT local): 2.791 ms
+[urllc-biblioteca] Latência uRLLC (RTT local): 2.740 ms
+[urllc-labs] Latência uRLLC (RTT local): 1.652 ms
+[urllc-labs] Latência uRLLC (RTT local): 3.230 ms
+[urllc-reitoria] Latência uRLLC (RTT local): 2.659 ms
+[urllc-reitoria] Latência uRLLC (RTT local): 2.334 ms
+=== Resumo estatístico do experimento: embb_12M_udp_reativo ===
+
+Amostras coletadas: 70
+Latência média: 17.876 ms
+Latência mediana (p50): 1.044 ms
+Desvio padrão: 98.290 ms
+Mínimo: 0.233 ms | Máximo: 587.307 ms
+Intervalo de confiança 95% para a média: [-5.561, 41.312] ms
+
+Percentis:
+  p50: 1.044 ms
+  p75: 1.567 ms
+  p90: 2.103 ms
+  p95: 2.476 ms
+  p99: 586.722 ms
+
+Violações do limiar de 5.0 ms: 2 de 70 amostras (2.86%)
+
+Gráficos salvos em /app/resultados/execucoes/reativo/rep_01 (sufixo: embb_12M_udp_reativo)
+*** Coletando estatísticas e gerando gráficos (sufixo: embb_12M_udp_reativo)
+*** Experimento finalizado

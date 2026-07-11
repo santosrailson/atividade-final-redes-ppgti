@@ -1,0 +1,84 @@
+Iniciando gerador uRLLC (Scapy/TCP) para 10.0.99.1:5000
+Latência uRLLC (RTT local): 498.433 ms
+Falha ao medir latência, reconectando
+Latência uRLLC (RTT local): 898.154 ms
+Falha ao medir latência, reconectando
+Latência uRLLC (RTT local): 126.240 ms
+Latência uRLLC (RTT local): 895.449 ms
+Latência uRLLC (RTT local): 128.502 ms
+Latência uRLLC (RTT local): 842.623 ms
+Latência uRLLC (RTT local): 127.141 ms
+Latência uRLLC (RTT local): 473.488 ms
+Latência uRLLC (RTT local): 127.331 ms
+Latência uRLLC (RTT local): 1502.236 ms
+Latência uRLLC (RTT local): 127.481 ms
+Latência uRLLC (RTT local): 464.375 ms
+Latência uRLLC (RTT local): 126.651 ms
+Latência uRLLC (RTT local): 462.642 ms
+Latência uRLLC (RTT local): 457.528 ms
+Latência uRLLC (RTT local): 125.422 ms
+Latência uRLLC (RTT local): 791.545 ms
+Latência uRLLC (RTT local): 128.394 ms
+Latência uRLLC (RTT local): 128.605 ms
+Latência uRLLC (RTT local): 1484.458 ms
+Latência uRLLC (RTT local): 130.351 ms
+Latência uRLLC (RTT local): 788.419 ms
+Latência uRLLC (RTT local): 456.308 ms
+Latência uRLLC (RTT local): 460.515 ms
+Latência uRLLC (RTT local): 456.167 ms
+Latência uRLLC (RTT local): 126.744 ms
+Latência uRLLC (RTT local): 461.945 ms
+Latência uRLLC (RTT local): 459.454 ms
+Latência uRLLC (RTT local): 457.314 ms
+Latência uRLLC (RTT local): 128.201 ms
+Latência uRLLC (RTT local): 455.419 ms
+Falha ao medir latência, reconectando
+Latência uRLLC (RTT local): 897.639 ms
+Latência uRLLC (RTT local): 899.449 ms
+Latência uRLLC (RTT local): 874.906 ms
+Falha ao medir latência, reconectando
+Latência uRLLC (RTT local): 511.007 ms
+Latência uRLLC (RTT local): 517.499 ms
+Latência uRLLC (RTT local): 1646.827 ms
+Falha ao medir latência, reconectando
+Latência uRLLC (RTT local): 524.967 ms
+Falha ao medir latência, reconectando
+Latência uRLLC (RTT local): 127.495 ms
+Latência uRLLC (RTT local): 507.483 ms
+Latência uRLLC (RTT local): 503.513 ms
+Latência uRLLC (RTT local): 848.707 ms
+Latência uRLLC (RTT local): 127.557 ms
+Latência uRLLC (RTT local): 128.486 ms
+Latência uRLLC (RTT local): 127.490 ms
+Latência uRLLC (RTT local): 127.428 ms
+Latência uRLLC (RTT local): 798.412 ms
+Latência uRLLC (RTT local): 463.729 ms
+Latência uRLLC (RTT local): 128.487 ms
+Latência uRLLC (RTT local): 127.452 ms
+Latência uRLLC (RTT local): 459.286 ms
+Latência uRLLC (RTT local): 23.275 ms
+Latência uRLLC (RTT local): 11.134 ms
+Latência uRLLC (RTT local): 13.775 ms
+Latência uRLLC (RTT local): 12.437 ms
+Latência uRLLC (RTT local): 14.666 ms
+Latência uRLLC (RTT local): 13.690 ms
+Latência uRLLC (RTT local): 14.337 ms
+Latência uRLLC (RTT local): 14.096 ms
+Latência uRLLC (RTT local): 13.908 ms
+Latência uRLLC (RTT local): 13.788 ms
+Latência uRLLC (RTT local): 14.412 ms
+Latência uRLLC (RTT local): 13.384 ms
+Latência uRLLC (RTT local): 14.757 ms
+Latência uRLLC (RTT local): 14.656 ms
+Latência uRLLC (RTT local): 13.797 ms
+Latência uRLLC (RTT local): 14.658 ms
+Latência uRLLC (RTT local): 14.154 ms
+Latência uRLLC (RTT local): 13.934 ms
+Latência uRLLC (RTT local): 14.081 ms
+Latência uRLLC (RTT local): 14.162 ms
+Latência uRLLC (RTT local): 13.978 ms
+Latência uRLLC (RTT local): 14.024 ms
+Latência uRLLC (RTT local): 12.767 ms
+Latência uRLLC (RTT local): 12.398 ms
+Latência uRLLC (RTT local): 13.552 ms
+Gerador uRLLC finalizado. 76 medições salvas em /app/resultados/execucoes/sem_qos/rep_01/latencias_urllc_rtt.csv

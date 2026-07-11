@@ -1,0 +1,4 @@
+1783766757.967	inicio_monitoramento
+1783766761.834	controle_ativar
+1783766815.805	controle_desativar
+1783766817.976	fim_monitoramento

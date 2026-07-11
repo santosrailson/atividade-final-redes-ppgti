@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """
 Compara estatisticamente vários cenários de experimento (ex.: uRLLC
-isolado x uRLLC+eMBB sem controle x uRLLC+eMBB com controle
-preventivo x uRLLC+eMBB com controle reativo).
+isolado x uRLLC+eMBB sem QoS x QoS estático x closed loop reativo).
 
 Este script é o que dá suporte direto à seção de "Avaliação" do
 artigo: em vez de olhar um experimento por vez, gera uma tabela e
@@ -14,15 +13,16 @@ renomeando/copiando o latencias_urllc.csv de cada um):
 
     python3 comparar_cenarios.py \\
         --cenario "Isolado:resultados/latencias_isolado.csv" \\
-        --cenario "Sem controle:resultados/latencias_sem_controle.csv" \\
-        --cenario "Preventivo:resultados/latencias_preventivo.csv" \\
-        --cenario "Reativo:resultados/latencias_reativo.csv" \\
+        --cenario "Sem QoS:resultados/latencias_sem_qos.csv" \\
+        --cenario "QoS estático:resultados/latencias_qos_estatico.csv" \\
+        --cenario "Closed loop:resultados/latencias_reativo.csv" \\
         --saida resultados/comparacao
 
 O script executar_bateria_testes.sh automatiza essa sequência.
 """
 
 import argparse
+import csv
 import os
 
 import matplotlib
@@ -39,26 +39,34 @@ def ler_latencias(caminho_csv):
     valores = []
     if not os.path.exists(caminho_csv):
         return np.array(valores)
-    with open(caminho_csv, "r") as arquivo:
-        for linha in arquivo.readlines()[1:]:
-            linha = linha.strip()
+    with open(caminho_csv, "r", newline="") as arquivo:
+        for linha in csv.DictReader(arquivo):
             if linha:
-                valores.append(float(linha))
+                valores.append(float(linha["latencia_ms"]))
     return np.array(valores)
 
 
-def calcular_estatisticas(valores):
+def calcular_estatisticas(repeticoes):
+    if isinstance(repeticoes, np.ndarray):
+        repeticoes = [repeticoes]
+    repeticoes = [valores for valores in repeticoes if len(valores) > 0]
+    valores = np.concatenate(repeticoes) if repeticoes else np.array([])
     n = len(valores)
     if n == 0:
         return None
     media = float(np.mean(valores))
-    erro_padrao = stats.sem(valores) if n > 1 else 0.0
-    if n > 1:
-        ic_inferior, ic_superior = stats.t.interval(NIVEL_CONFIANCA, df=n - 1, loc=media, scale=erro_padrao)
+    medias_repeticoes = np.array([np.mean(amostras) for amostras in repeticoes])
+    erro_padrao = stats.sem(medias_repeticoes) if len(medias_repeticoes) > 1 else 0.0
+    if len(medias_repeticoes) > 1:
+        ic_inferior, ic_superior = stats.t.interval(
+            NIVEL_CONFIANCA, df=len(medias_repeticoes) - 1,
+            loc=float(np.mean(medias_repeticoes)), scale=erro_padrao
+        )
     else:
         ic_inferior, ic_superior = media, media
     return {
         "n": n,
+        "repeticoes": len(repeticoes),
         "media": media,
         "mediana": float(np.median(valores)),
         "desvio_padrao": float(np.std(valores, ddof=1)) if n > 1 else 0.0,
@@ -72,8 +80,8 @@ def calcular_estatisticas(valores):
 
 def escrever_tabela(cenarios_estatisticas, caminho_saida):
     with open(caminho_saida, "w") as arquivo:
-        cabecalho = "%-20s %6s %10s %10s %10s %10s %10s %12s" % (
-            "Cenário", "n", "Média", "Mediana", "DesvPad", "p95", "p99", "%>5ms"
+        cabecalho = "%-20s %5s %7s %10s %10s %10s %10s %10s %12s" % (
+            "Cenário", "reps", "n", "Média", "Mediana", "DesvPad", "p95", "p99", "%>5ms"
         )
         arquivo.write(cabecalho + "\n")
         arquivo.write("-" * len(cabecalho) + "\n")
@@ -82,15 +90,15 @@ def escrever_tabela(cenarios_estatisticas, caminho_saida):
                 arquivo.write("%-20s sem amostras\n" % nome)
                 continue
             arquivo.write(
-                "%-20s %6d %10.3f %10.3f %10.3f %10.3f %10.3f %12.2f\n"
-                % (nome, e["n"], e["media"], e["mediana"], e["desvio_padrao"], e["p95"], e["p99"], e["percentual_violacoes"])
+                "%-20s %5d %7d %10.3f %10.3f %10.3f %10.3f %10.3f %12.2f\n"
+                % (nome, e["repeticoes"], e["n"], e["media"], e["mediana"], e["desvio_padrao"], e["p95"], e["p99"], e["percentual_violacoes"])
             )
     print(open(caminho_saida).read())
 
 
 def gerar_grafico_boxplot_comparativo(cenarios_dados, caminho_saida):
-    nomes = [nome for nome, valores in cenarios_dados if len(valores) > 0]
-    dados = [valores for nome, valores in cenarios_dados if len(valores) > 0]
+    nomes = [nome for nome, repeticoes in cenarios_dados if repeticoes]
+    dados = [np.concatenate(repeticoes) for nome, repeticoes in cenarios_dados if repeticoes]
 
     plt.figure(figsize=(max(6, 2 * len(nomes)), 6))
     # Ticks definidos manualmente (em vez do parâmetro labels/tick_labels
@@ -147,8 +155,9 @@ def main():
 
     cenarios_dados = []
     for item in args.cenario:
-        nome, caminho = item.split(":", 1)
-        cenarios_dados.append((nome.strip(), ler_latencias(caminho.strip())))
+        nome, caminhos = item.split(":", 1)
+        repeticoes = [ler_latencias(caminho.strip()) for caminho in caminhos.split(",")]
+        cenarios_dados.append((nome.strip(), repeticoes))
 
     cenarios_estatisticas = [(nome, calcular_estatisticas(valores)) for nome, valores in cenarios_dados]
 

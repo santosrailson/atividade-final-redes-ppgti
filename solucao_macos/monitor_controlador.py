@@ -18,10 +18,10 @@ Este processo roda no host da Central de Monitoramento do campus
    limiar (5 ms) por `JANELA_VIOLACOES` medições seguidas, escreve um
    sinal "ativar" em um arquivo compartilhado. O processo orquestrador
    (experimento.py) lê esse arquivo e instala, via OpenFlow, uma regra
-   que descarta o tráfego eMBB nos switches OVS -- protegendo o
-   uRLLC. Quando a latência volta ao normal por
+   que reduz a taxa das filas eMBB nos switches OVS -- protegendo o
+   uRLLC sem interromper o outro serviço. Quando a latência volta ao normal por
    `AMOSTRAS_PARA_NORMALIZAR` medições seguidas, o sinal "desativar"
-   libera o eMBB de novo.
+   restaura a taxa normal do eMBB.
 
 A comunicação monitor -> orquestrador via arquivo (em vez de, por
 exemplo, uma fila em memória) é proposital: monitor e orquestrador
@@ -36,12 +36,13 @@ lista de latências) é compartilhado entre elas com um lock.
 
 import os
 import socket
-import struct
 import sys
 import threading
 import time
 
-from scapy.all import conf, IP, TCP, Raw, StreamSocket
+from scapy.all import conf, Raw, StreamSocket
+
+from protocolo_urllc import TAMANHO_MENSAGEM, codificar_mensagem, extrair_mensagens
 
 conf.verb = 0
 
@@ -65,7 +66,7 @@ def nome_do_site(ip):
     return ip
 
 DIRETORIO_PROJETO = os.path.dirname(os.path.abspath(__file__))
-DIRETORIO_RESULTADOS = os.path.join(DIRETORIO_PROJETO, "resultados")
+DIRETORIO_RESULTADOS = os.environ.get("RESULTADOS_DIR", os.path.join(DIRETORIO_PROJETO, "resultados"))
 os.makedirs(DIRETORIO_RESULTADOS, exist_ok=True)
 
 ARQUIVO_SINAL = os.path.join(DIRETORIO_RESULTADOS, "sinal_controle_qos")
@@ -123,9 +124,9 @@ def processar_conexao(soquete_cliente, endereco, estado_controle, latencias):
         soquete_cliente.setsockopt(socket.IPPROTO_TCP, socket.TCP_QUICKACK, 1)
     except (AttributeError, OSError):
         pass
-    conexao = StreamSocket(soquete_cliente, IP)
-    resposta_base = IP(dst=endereco[0], tos=0xB8) / TCP(dport=5000) / Raw(load=b"\x00" * 8)
+    conexao = StreamSocket(soquete_cliente, Raw)
     site = nome_do_site(endereco[0])
+    buffer = b""
 
     try:
         while True:
@@ -139,22 +140,23 @@ def processar_conexao(soquete_cliente, endereco, estado_controle, latencias):
             if pacote is None or Raw not in pacote:
                 continue
 
-            dados = bytes(pacote[Raw].load)
-            if len(dados) < 8:
-                continue
+            buffer += bytes(pacote[Raw].load)
+            mensagens, buffer = extrair_mensagens(buffer)
+            for sequencia, timestamp_envio in mensagens:
+                timestamp_recebimento = time.time()
+                latencia_ms = max(0.0, (timestamp_recebimento - timestamp_envio) * 1000)
+                conexao.send(Raw(load=codificar_mensagem(sequencia, timestamp_envio)))
 
-            timestamp_envio = struct.unpack("!d", dados[:8])[0]
-            timestamp_recebimento = time.time()
-            latencia_ms = (timestamp_recebimento - timestamp_envio) * 1000
+                print("Latência medida: %.3f ms (de %s - %s, seq=%d)" %
+                      (latencia_ms, endereco[0], site, sequencia), flush=True)
 
-            resposta_base[Raw].load = dados[:8]
-            conexao.send(resposta_base)
-
-            print("Latência medida: %.3f ms (de %s - %s)" % (latencia_ms, endereco[0], site), flush=True)
-
-            with estado_controle["lock"]:
-                latencias.append(latencia_ms)
-                avaliar_latencia(latencia_ms, estado_controle)
+                with estado_controle["lock"]:
+                    latencias.append((timestamp_recebimento, endereco[0], site, sequencia, latencia_ms))
+                    with open(ARQUIVO_LATENCIAS, "a") as arquivo:
+                        arquivo.write("%.6f,%s,%s,%d,%.3f\n" %
+                                      (timestamp_recebimento, endereco[0], site, sequencia, latencia_ms))
+                        arquivo.flush()
+                    avaliar_latencia(latencia_ms, estado_controle)
     except Exception as erro:
         print("Erro na conexão (%s): %s" % (site, erro), flush=True)
     finally:
@@ -170,6 +172,10 @@ def iniciar_servidor(endereco="0.0.0.0", porta=5000, duracao_segundos=60):
 
     if os.path.exists(ARQUIVO_SINAL):
         os.remove(ARQUIVO_SINAL)
+    # Escrita incremental: uma interrupção não elimina as evidências já
+    # coletadas e o orquestrador pode validar a execução sem esperar o timeout.
+    with open(ARQUIVO_LATENCIAS, "w") as arquivo:
+        arquivo.write("timestamp_recebimento,ip_origem,site,sequencia,latencia_ms\n")
 
     servidor = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     servidor.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -211,13 +217,6 @@ def iniciar_servidor(endereco="0.0.0.0", porta=5000, duracao_segundos=60):
         thread.join(timeout=3.0)
 
     servidor.close()
-
-    # As latências one-way salvas aqui são a fonte principal usada por
-    # analisar_resultados.py para gerar as estatísticas e os gráficos.
-    with open(ARQUIVO_LATENCIAS, "w") as arquivo:
-        arquivo.write("latencia_ms\n")
-        for valor in latencias:
-            arquivo.write("%.3f\n" % valor)
 
     print("Monitor finalizado. %d medições salvas em %s" % (len(latencias), ARQUIVO_LATENCIAS), flush=True)
 

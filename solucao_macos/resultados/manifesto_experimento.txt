@@ -1,0 +1,6 @@
+data_utc=2026-07-11T10:42:08Z
+duracao_segundos=60
+taxa_embb_por_fluxo=12M
+repeticoes=1
+python=Python 3.10.12
+kernel=Linux d11e81e5a842 6.12.76-linuxkit #1 SMP Thu Jun 18 21:12:39 UTC 2026 aarch64 aarch64 aarch64 GNU/Linux

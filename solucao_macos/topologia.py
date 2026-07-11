@@ -100,6 +100,11 @@ def configurar_interfaces_hosts(rede):
                 no.cmd("ethtool -K %s rx-checksum off 2>/dev/null" % nome_interface)
 
 
+TAXA_BACKBONE_MBPS = 20
+TAXA_EMBB_NORMAL_BPS = 20000000
+TAXA_EMBB_PROTEGIDA_BPS = 2000000
+
+
 def configurar_qos_ovs(switch, interface):
     """Cria, em cada porta do switch, duas filas HTB (Hierarchical Token Bucket):
 
@@ -112,15 +117,15 @@ def configurar_qos_ovs(switch, interface):
     """
     switch.cmd(
         "ovs-vsctl -- set port %s qos=@newqos "
-        "-- --id=@newqos create QoS type=linux-htb other-config:max-rate=1000000000 "
+        "-- --id=@newqos create QoS type=linux-htb other-config:max-rate=20000000 "
         "queues=0=@q0,1=@q1 "
-        "-- --id=@q0 create Queue other-config:min-rate=1000000 other-config:max-rate=1000000000 "
-        "-- --id=@q1 create Queue other-config:min-rate=500000000 other-config:max-rate=1000000000" %
+        "-- --id=@q0 create Queue external_ids:classe=embb other-config:min-rate=1000000 other-config:max-rate=20000000 "
+        "-- --id=@q1 create Queue external_ids:classe=urllc other-config:min-rate=15000000 other-config:max-rate=20000000" %
         interface
     )
 
 
-def configurar_ovs(switch):
+def configurar_ovs(switch, qos_estatico=True):
     """Sobe as interfaces do switch e instala as regras OpenFlow de QoS.
 
     O switch continua se comportando como um switch L2 "normal"
@@ -144,18 +149,18 @@ def configurar_ovs(switch):
     ofctl = "ovs-ofctl -O OpenFlow13"
     switch.cmd("%s del-flows %s" % (ofctl, switch.name))
 
-    switch.cmd(
-        "%s add-flow %s 'priority=100,tcp,tp_dst=5000,actions=set_queue:1,normal'" % (ofctl, switch.name)
-    )
-    switch.cmd(
-        "%s add-flow %s 'priority=100,tcp,tp_src=5000,actions=set_queue:1,normal'" % (ofctl, switch.name)
-    )
-    switch.cmd(
-        "%s add-flow %s 'priority=10,actions=set_queue:0,normal'" % (ofctl, switch.name)
-    )
-
-    for nome_interface in interfaces:
-        configurar_qos_ovs(switch, nome_interface)
+    if qos_estatico:
+        switch.cmd(
+            "%s add-flow %s 'priority=100,tcp,tp_dst=5000,actions=set_queue:1,normal'" % (ofctl, switch.name)
+        )
+        switch.cmd(
+            "%s add-flow %s 'priority=100,tcp,tp_src=5000,actions=set_queue:1,normal'" % (ofctl, switch.name)
+        )
+        switch.cmd("%s add-flow %s 'priority=10,actions=set_queue:0,normal'" % (ofctl, switch.name))
+        for nome_interface in interfaces:
+            configurar_qos_ovs(switch, nome_interface)
+    else:
+        switch.cmd("%s add-flow %s 'priority=10,actions=normal'" % (ofctl, switch.name))
 
 
 def limpar_ambiente():
@@ -168,6 +173,7 @@ def limpar_ambiente():
     os.system("mn -c 2>/dev/null")
     for nome_bridge in ["r1", "r2", "r3", "r4"]:
         os.system("ovs-vsctl --if-exists del-br %s 2>/dev/null" % nome_bridge)
+    os.system("ovs-vsctl -- --all destroy QoS -- --all destroy Queue 2>/dev/null")
     padrao_interfaces = "r[1-4]-eth|(sens|cam)_[a-z]+-eth|c_(urllc|video)-eth"
     try:
         saida = subprocess.check_output(
@@ -182,11 +188,13 @@ def limpar_ambiente():
         pass
 
 
-def criar_topologia():
+def criar_topologia(qos_estatico=True, taxa_backbone_mbps=TAXA_BACKBONE_MBPS):
     """Monta a topologia completa (hosts dos 3 sites do campus + central +
     4 switches OVS) e devolve a rede pronta para uso."""
     limpar_ambiente()
-    rede = Mininet(link=TCLink, switch=OVSSwitch)
+    # ARP estático evita que a descoberta de vizinhos concorra com o eMBB
+    # justamente durante a saturação usada para avaliar o plano de dados.
+    rede = Mininet(link=TCLink, switch=OVSSwitch, autoStaticArp=True)
 
     info("*** Criando switches OVS (4 roteadores da rede de transporte)\n")
     switches = {}
@@ -212,9 +220,9 @@ def criar_topologia():
     rede.addLink(host_central_video, switches["r4"], bw=100, delay="0ms")
 
     info("*** Criando backbone da rede de transporte (r1-r2-r3-r4)\n")
-    rede.addLink(switches["r1"], switches["r2"], bw=1000, delay="0ms")
-    rede.addLink(switches["r2"], switches["r3"], bw=1000, delay="0ms")
-    rede.addLink(switches["r3"], switches["r4"], bw=1000, delay="0ms")
+    rede.addLink(switches["r1"], switches["r2"], bw=taxa_backbone_mbps, delay="1ms", max_queue_size=100)
+    rede.addLink(switches["r2"], switches["r3"], bw=taxa_backbone_mbps, delay="1ms", max_queue_size=100)
+    rede.addLink(switches["r3"], switches["r4"], bw=taxa_backbone_mbps, delay="1ms", max_queue_size=100)
 
     info("*** Iniciando rede\n")
     rede.start()
@@ -223,7 +231,7 @@ def criar_topologia():
 
     info("*** Configurando switches OVS\n")
     for nome in ["r1", "r2", "r3", "r4"]:
-        configurar_ovs(rede.getNodeByName(nome))
+        configurar_ovs(rede.getNodeByName(nome), qos_estatico=qos_estatico)
 
     return rede
 

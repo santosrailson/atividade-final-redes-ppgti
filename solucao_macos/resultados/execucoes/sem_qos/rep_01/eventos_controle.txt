@@ -1,0 +1,2 @@
+1783766609.119	inicio_monitoramento
+1783766669.165	fim_monitoramento

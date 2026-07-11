@@ -38,6 +38,7 @@ gráfica), pois rodam dentro do container Docker sem display.
 """
 
 import argparse
+import csv
 import os
 import sys
 
@@ -51,16 +52,23 @@ LIMIAR_LATENCIA_MS = 5.0
 NIVEL_CONFIANCA = 0.95
 
 
-def ler_latencias(caminho_csv):
+def ler_amostras(caminho_csv):
     valores = []
+    timestamps = []
     if not os.path.exists(caminho_csv):
-        return np.array(valores)
-    with open(caminho_csv, "r") as arquivo:
-        for linha in arquivo.readlines()[1:]:
-            linha = linha.strip()
-            if linha:
-                valores.append(float(linha))
-    return np.array(valores)
+        return np.array(valores), np.array(timestamps)
+    with open(caminho_csv, "r", newline="") as arquivo:
+        leitor = csv.DictReader(arquivo)
+        for indice, linha in enumerate(leitor):
+            if not linha:
+                continue
+            valores.append(float(linha["latencia_ms"]))
+            timestamps.append(float(linha.get("timestamp_recebimento") or indice))
+    return np.array(valores), np.array(timestamps)
+
+
+def ler_latencias(caminho_csv):
+    return ler_amostras(caminho_csv)[0]
 
 
 def ler_eventos(caminho_eventos):
@@ -137,15 +145,14 @@ def escrever_resumo(estatisticas, caminho_saida, sufixo):
         )
 
 
-def gerar_grafico_serie_temporal(latencias, eventos, caminho_saida):
+def gerar_grafico_serie_temporal(latencias, timestamps, eventos, caminho_saida):
     plt.figure(figsize=(12, 6))
     plt.plot(latencias, marker="o", markersize=3, linestyle="-", linewidth=1, color="tab:blue", label="Latência uRLLC")
     plt.axhline(y=LIMIAR_LATENCIA_MS, color="red", linestyle="--", label="Limiar de 5 ms")
 
-    tempo_inicial = eventos[0][0] if eventos else 0
     rotulos_usados = set()
     for timestamp, evento in eventos:
-        indice = int(timestamp - tempo_inicial)
+        indice = int(np.searchsorted(timestamps, timestamp)) if len(timestamps) else -1
         if not (0 <= indice < len(latencias)):
             continue
         if evento == "controle_ativar":
@@ -229,7 +236,7 @@ def gerar_grafico_cdf(latencias, estatisticas, caminho_saida):
 
 def analisar(caminho_csv, caminho_eventos, diretorio_saida, sufixo):
     os.makedirs(diretorio_saida, exist_ok=True)
-    latencias = ler_latencias(caminho_csv)
+    latencias, timestamps = ler_amostras(caminho_csv)
     eventos = ler_eventos(caminho_eventos)
     estatisticas = calcular_estatisticas(latencias)
 
@@ -242,7 +249,7 @@ def analisar(caminho_csv, caminho_eventos, diretorio_saida, sufixo):
         return
 
     gerar_grafico_serie_temporal(
-        latencias, eventos, os.path.join(diretorio_saida, "grafico_serie_temporal_%s.png" % sufixo)
+        latencias, timestamps, eventos, os.path.join(diretorio_saida, "grafico_serie_temporal_%s.png" % sufixo)
     )
     gerar_grafico_histograma(
         latencias, estatisticas, os.path.join(diretorio_saida, "grafico_histograma_%s.png" % sufixo)

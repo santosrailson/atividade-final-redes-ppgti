@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Guia de escrita — Closed Loop uRLLC</title>
+  <style>
+    :root { --ink:#172033; --muted:#5d6678; --paper:#fff; --bg:#edf2f7; --blue:#155eef; --cyan:#0e9384; --line:#d7deea; --warn:#b54708; }
+    * { box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { margin:0; color:var(--ink); background:var(--bg); font:16px/1.65 system-ui,-apple-system,"Segoe UI",sans-serif; }
+    header { color:white; background:linear-gradient(125deg,#102a56,#155eef 62%,#0e9384); padding:64px 24px 52px; }
+    header div, main { max-width:1080px; margin:auto; }
+    h1 { max-width:820px; margin:0 0 12px; font-size:clamp(2rem,5vw,3.7rem); line-height:1.08; letter-spacing:-.04em; }
+    header p { max-width:750px; margin:0; color:#e6efff; font-size:1.15rem; }
+    nav { position:sticky; top:0; z-index:4; overflow:auto; white-space:nowrap; background:#fffefb; border-bottom:1px solid var(--line); box-shadow:0 4px 18px #17203312; }
+    nav div { max-width:1080px; margin:auto; padding:10px 20px; }
+    nav a { display:inline-block; margin-right:18px; color:#344054; text-decoration:none; font-weight:650; }
+    nav a:hover { color:var(--blue); }
+    main { padding:34px 20px 72px; }
+    section { margin:24px 0; padding:clamp(22px,4vw,42px); background:var(--paper); border:1px solid var(--line); border-radius:18px; box-shadow:0 10px 28px #1720330b; }
+    h2 { margin:0 0 8px; color:#102a56; font-size:clamp(1.55rem,3vw,2.15rem); }
+    h3 { margin:28px 0 6px; font-size:1.08rem; }
+    .eyebrow { color:var(--blue); font-size:.78rem; font-weight:800; letter-spacing:.1em; text-transform:uppercase; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:14px; margin:18px 0; }
+    .card { padding:17px; background:#f8fafc; border:1px solid var(--line); border-radius:12px; }
+    .card strong { display:block; margin-bottom:4px; color:#102a56; }
+    .strategy { border-left:4px solid var(--cyan); padding:12px 16px; background:#f0fdf9; border-radius:0 10px 10px 0; }
+    .warning { border-left-color:#f79009; background:#fffaeb; }
+    code { padding:2px 5px; border-radius:5px; background:#eef2f8; font-size:.92em; }
+    table { width:100%; border-collapse:collapse; margin:16px 0; font-size:.94rem; }
+    th,td { padding:10px; text-align:left; vertical-align:top; border-bottom:1px solid var(--line); }
+    th { color:#344054; background:#f8fafc; }
+    ul,ol { padding-left:22px; }
+    .check li { margin:7px 0; }
+    footer { max-width:1080px; margin:auto; padding:0 20px 48px; color:var(--muted); }
+    @media print { nav { display:none } body { background:white } section { box-shadow:none; break-inside:avoid } header { padding:32px 24px } }
+  </style>
+</head>
+<body>
+<header><div>
+  <div class="eyebrow" style="color:#b8fff2">Roteiro acadêmico e experimental</div>
+  <h1>Como explicar o sistema closed loop para uRLLC</h1>
+  <p>Guia para transformar o código e as evidências do laboratório em um relato científico claro. Use as perguntas, estratégias e checklists; não copie o texto como se fosse resultado observado.</p>
+</div></header>
+<nav><div>
+  <a href="#uso">Como usar</a><a href="#introducao">Introdução</a><a href="#metodologia">Metodologia</a><a href="#proposta">Proposta</a><a href="#avaliacao">Avaliação</a><a href="#conclusoes">Conclusões</a><a href="#checklist">Checklist</a>
+</div></nav>
+<main>
+<section id="uso">
+  <div class="eyebrow">Antes de escrever</div><h2>Como usar este guia</h2>
+  <div class="grid">
+    <div class="card"><strong>1. Execute</strong>Rode a bateria com pelo menos cinco repetições e preserve todas as pastas em <code>resultados/execucoes</code>.</div>
+    <div class="card"><strong>2. Selecione</strong>Escolha figuras que respondam perguntas, não apenas as mais bonitas: série temporal, ECDF e comparação entre grupos.</div>
+    <div class="card"><strong>3. Redija</strong>Preencha cada seção respondendo às perguntas deste documento e citando arquivos, parâmetros e números reais.</div>
+    <div class="card"><strong>4. Revise</strong>Separe fato observado, interpretação e limitação. Não prometa garantia de 5 ms se houve violações.</div>
+  </div>
+  <p class="strategy warning"><strong>Regra de ouro:</strong> o relatório deve permitir que outra pessoa reconstrua o cenário e conteste sua conclusão usando os mesmos dados.</p>
+</section>
+
+<section id="introducao">
+  <div class="eyebrow">Seção 1</div><h2>Introdução</h2>
+  <p>A Introdução explica por que o problema importa, qual lacuna será investigada e qual é a contribuição. Ela não deve antecipar detalhes de comandos nem virar revisão bibliográfica extensa.</p>
+  <h3>Estratégia de escrita: funil</h3>
+  <ol>
+    <li>Contextualize redes 5G e coexistência de classes com necessidades distintas.</li>
+    <li>Explique o conflito: uRLLC exige baixa latência; eMBB pressiona filas com grande volume.</li>
+    <li>Apresente o problema mensurável: manter latência one-way até 5 ms na rede emulada.</li>
+    <li>Mostre a lacuna: QoS estático pode não reagir à mudança de carga.</li>
+    <li>Declare objetivo e contribuição: monitor, decisão com histerese e atuação OpenFlow.</li>
+  </ol>
+  <div class="grid">
+    <div class="card"><strong>Pergunta de pesquisa</strong>Um closed loop reativo reduz p95, p99 e a proporção de amostras acima de 5 ms sob contenção eMBB?</div>
+    <div class="card"><strong>Hipótese</strong>Quando a carga eMBB congestiona o backbone, a limitação dinâmica da fila eMBB reduz a cauda da latência uRLLC.</div>
+  </div>
+  <h3>O que citar</h3>
+  <p>Use fontes sobre 5G/uRLLC, network slicing, QoS, OpenFlow/SDN, controle em malha fechada e métricas de cauda. Prefira padrões 3GPP/ITU, RFCs e artigos revisados por pares.</p>
+  <p class="strategy"><strong>Fechamento sugerido:</strong> termine com um parágrafo enumerando as contribuições e outro descrevendo a organização do texto.</p>
+</section>
+
+<section id="metodologia">
+  <div class="eyebrow">Seção 2</div><h2>Metodologia</h2>
+  <p>Esta seção torna o experimento reproduzível. Descreva o desenho antes dos resultados e diferencie variáveis controladas, independentes e dependentes.</p>
+  <table>
+    <thead><tr><th>Elemento</th><th>O que registrar</th></tr></thead>
+    <tbody>
+      <tr><td>Ambiente</td><td>macOS, versão do Docker Desktop, imagem Ubuntu, Mininet, OVS, Scapy, iperf3, CPU e memória.</td></tr>
+      <tr><td>Topologia</td><td>Três sites, duas aplicações por site, central, quatro switches OVS L2 e enlaces do backbone de 20 Mbit/s com 1 ms.</td></tr>
+      <tr><td>Variável independente</td><td>Política: isolado, sem QoS, QoS estático e closed loop reativo.</td></tr>
+      <tr><td>Variáveis dependentes</td><td>Mediana, média, p95, p99, máximo, percentual acima de 5 ms, tempo de reação e vazão eMBB.</td></tr>
+      <tr><td>Controles</td><td>Duração, taxa eMBB, intervalo uRLLC, topologia, versões e recursos da VM.</td></tr>
+      <tr><td>Repetições</td><td>No mínimo cinco execuções independentes por cenário; reporte IC calculado entre execuções.</td></tr>
+    </tbody>
+  </table>
+  <h3>Explique a medição</h3>
+  <p>Cada mensagem TCP carrega assinatura, número de sequência e timestamp. O receptor remonta o fluxo, calcula <code>(tempo de chegada − tempo de envio) × 1000</code> e registra origem e sequência. Justifique one-way porque namespaces Mininet compartilham o relógio da mesma VM; declare que uma rede física exigiria PTP/NTP.</p>
+  <h3>Procedimento replicável</h3>
+  <ol>
+    <li>Construa a imagem e execute os testes automatizados.</li>
+    <li>Rode os quatro cenários em ordem alternada ou randomizada para reduzir viés temporal.</li>
+    <li>Use carga eMBB total superior ao backbone para produzir contenção intencional.</li>
+    <li>Preserve CSVs, eventos, logs e manifesto de ambiente.</li>
+    <li>Calcule distribuição por pacote, mas use as execuções independentes para o intervalo de confiança.</li>
+  </ol>
+  <p class="strategy warning"><strong>Ameaças à validade:</strong> jitter do Docker Desktop, emulação em userspace, dependência temporal entre pacotes, abstração L2 dos roteadores e diferença entre laboratório e 5G real.</p>
+</section>
+
+<section id="proposta">
+  <div class="eyebrow">Seção 3</div><h2>Proposta</h2>
+  <p>Descreva a arquitetura lógica e o ciclo observar–decidir–atuar–verificar. O leitor deve entender o mecanismo sem precisar ler o código.</p>
+  <div class="grid">
+    <div class="card"><strong>1. Observar</strong>Sensores enviam mensagens TCP; a central mede cada latência one-way.</div>
+    <div class="card"><strong>2. Decidir</strong>Duas violações consecutivas ativam proteção; três amostras normais liberam, evitando oscilação.</div>
+    <div class="card"><strong>3. Atuar</strong>OVS mantém uRLLC na fila 1 e reduz a taxa máxima da fila eMBB de 20 para 2 Mbit/s.</div>
+    <div class="card"><strong>4. Verificar</strong>Novas amostras alimentam o mesmo ciclo e determinam manutenção ou retirada da proteção.</div>
+  </div>
+  <h3>Decisões que precisam ser justificadas</h3>
+  <ul>
+    <li>Porta TCP 5000 e DSCP EF identificam uRLLC; portas UDP 5001–5003 identificam eMBB.</li>
+    <li>Histerese reduz flapping, mas acrescenta atraso de reação.</li>
+    <li>Limitar eMBB preserva o serviço, ao contrário de descartá-lo integralmente.</li>
+    <li>OVS L2 representa o plano de encaminhamento programável dos quatro nós de transporte; não é um roteador IP completo.</li>
+    <li>Sinalização por arquivo é adequada ao protótipo, mas produção usaria API autenticada, fila ou barramento de eventos.</li>
+  </ul>
+  <p class="strategy"><strong>Figura recomendada:</strong> desenhe dois diagramas: topologia física/lógica e sequência temporal pacote → monitor → decisão → OVS → nova medição.</p>
+</section>
+
+<section id="avaliacao">
+  <div class="eyebrow">Seção 4</div><h2>Avaliação</h2>
+  <p>A avaliação deve responder à pergunta de pesquisa, não apenas listar gráficos. Comece pelas condições experimentais, apresente dados e só então interprete.</p>
+  <h3>Comparações essenciais</h3>
+  <table>
+    <thead><tr><th>Comparação</th><th>O que ela isola</th><th>Resultado esperado</th></tr></thead>
+    <tbody>
+      <tr><td>Isolado × sem QoS</td><td>Efeito da contenção eMBB</td><td>Aumento de cauda e violações.</td></tr>
+      <tr><td>Sem QoS × QoS estático</td><td>Benefício da classificação fixa</td><td>Redução de p95/p99.</td></tr>
+      <tr><td>QoS estático × closed loop</td><td>Benefício incremental da realimentação</td><td>Menos violações durante picos.</td></tr>
+      <tr><td>Antes × depois da ativação</td><td>Tempo e efeito da atuação</td><td>Queda sustentada após o evento.</td></tr>
+    </tbody>
+  </table>
+  <h3>Estratégia de apresentação</h3>
+  <ol>
+    <li>Uma tabela com repetições, amostras, mediana, p95, p99 e percentual acima de 5 ms.</li>
+    <li>ECDF para comparar a distribuição completa e ler a conformidade no limiar.</li>
+    <li>Boxplot para dispersão e outliers, sem esconder pontos extremos.</li>
+    <li>Série temporal reativa com linhas verticais nos eventos de controle.</li>
+    <li>Vazão eMBB antes/durante/depois para evidenciar o custo da proteção.</li>
+  </ol>
+  <p>Relate tamanho de efeito além de “melhor/pior”: redução absoluta e relativa de p99 e violações. Se houver testes de hipótese, declare pressupostos; para poucas repetições ou dados não normais, considere bootstrap ou teste pareado não paramétrico.</p>
+  <p class="strategy warning"><strong>Não faça:</strong> tratar milhares de pacotes correlacionados de uma única rodada como milhares de experimentos independentes; selecionar somente a melhor execução; ou afirmar causalidade sem grupo de controle.</p>
+</section>
+
+<section id="conclusoes">
+  <div class="eyebrow">Seção 5</div><h2>Conclusões</h2>
+  <p>A conclusão responde diretamente à pergunta de pesquisa usando números já apresentados. Não introduza novas figuras, referências ou experimentos.</p>
+  <h3>Estrutura em quatro movimentos</h3>
+  <ol>
+    <li>Retome objetivo e abordagem em duas ou três frases.</li>
+    <li>Responda se a hipótese foi apoiada, citando p95, p99 e violações.</li>
+    <li>Declare o custo observado para eMBB e as limitações de generalização.</li>
+    <li>Proponha trabalhos futuros concretos.</li>
+  </ol>
+  <div class="grid">
+    <div class="card"><strong>Trabalhos futuros</strong>PTP, roteamento L3, múltiplos caminhos, filas por site, controlador SDN externo e testes em hardware.</div>
+    <div class="card"><strong>Novas estratégias</strong>Controle proporcional/adaptativo, previsão de congestionamento e limitação gradual baseada em p95 móvel.</div>
+  </div>
+  <p class="strategy"><strong>Linguagem calibrada:</strong> prefira “no ambiente emulado, o mecanismo reduziu…” a “o sistema garante…”. Garantia exige evidência muito mais ampla.</p>
+</section>
+
+<section id="checklist">
+  <div class="eyebrow">Revisão final</div><h2>Checklist antes da entrega</h2>
+  <ul class="check">
+    <li>☐ O repositório constrói do zero com um único comando.</li>
+    <li>☐ Há pelo menos cinco repetições completas em cada cenário.</li>
+    <li>☐ CSVs, eventos, logs, manifesto e gráficos estão preservados.</li>
+    <li>☐ O cenário sem QoS fica claramente separado do QoS estático.</li>
+    <li>☐ A carga efetivamente congestiona o gargalo.</li>
+    <li>☐ Há eventos de ativação e evidência do efeito posterior.</li>
+    <li>☐ A vazão eMBB também é reportada.</li>
+    <li>☐ Figuras têm unidades, legenda, limiar e fonte dos dados.</li>
+    <li>☐ Limitações e ameaças à validade estão explícitas.</li>
+    <li>☐ Toda conclusão é sustentada por um resultado apresentado.</li>
+  </ul>
+</section>
+</main>
+<footer>Guia associado ao laboratório uRLLC/eMBB. Atualize parâmetros e números conforme a execução final; não use valores esperados como se fossem observados.</footer>
+</body>
+</html>

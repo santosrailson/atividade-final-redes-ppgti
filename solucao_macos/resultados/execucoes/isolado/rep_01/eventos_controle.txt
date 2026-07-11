@@ -1,0 +1,3 @@
+1783766534.626	sem_embb
+1783766534.631	inicio_monitoramento
+1783766594.646	fim_monitoramento

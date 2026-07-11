@@ -1,59 +1,60 @@
 #!/bin/bash
-# Bateria de testes padrão para o artigo: roda 4 cenários em sequência
-#
-#   1. uRLLC isolado (sem eMBB concorrente)          -> baseline
-#   2. uRLLC + eMBB, SEM controle closed loop        -> mostra o problema
-#   3. uRLLC + eMBB, controle PREVENTIVO             -> eMBB já limitado desde o início
-#   4. uRLLC + eMBB, controle REATIVO                -> só limita ao violar 5 ms
-#
-# e ao final gera a comparação estatística entre eles (tabela +
-# boxplot + gráfico de barras com IC 95%).
-#
-# Deve ser executado DENTRO do container (o Mininet precisa criar
-# namespaces de rede, o que exige o container --privileged):
-#
-#   docker compose run --rm urllc-lab ./executar_bateria_testes.sh
-#
-# Variáveis de ambiente opcionais:
-#   DURACAO=90 TAXA_EMBB=10M ./executar_bateria_testes.sh
-set -e
+# Executa cenários independentes com repetições e preserva todas as evidências.
+set -euo pipefail
 
 DIRETORIO_SCRIPT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$DIRETORIO_SCRIPT"
 
 DURACAO=${DURACAO:-60}
-TAXA_EMBB=${TAXA_EMBB:-5M}
+TAXA_EMBB=${TAXA_EMBB:-12M}
+REPETICOES=${REPETICOES:-5}
 RESULTADOS="$DIRETORIO_SCRIPT/resultados"
-mkdir -p "$RESULTADOS"
+EXECUCOES="$RESULTADOS/execucoes"
+mkdir -p "$EXECUCOES"
 
 executar_cenario() {
     local nome="$1"
     shift
-    echo ""
-    echo "=============================================="
-    echo "  Cenário: $nome"
-    echo "=============================================="
-    python3 experimento.py --duracao "$DURACAO" "$@"
-    # Cada cenário sobrescreve resultados/latencias_urllc.csv; guardamos
-    # uma cópia com nome próprio antes de rodar o cenário seguinte.
-    cp "$RESULTADOS/latencias_urllc.csv" "$RESULTADOS/latencias_${nome}.csv"
+    local consolidado="$RESULTADOS/latencias_${nome}.csv"
+    rm -f "$consolidado"
+
+    for repeticao in $(seq 1 "$REPETICOES"); do
+        local pasta="$EXECUCOES/$nome/rep_$(printf '%02d' "$repeticao")"
+        rm -rf "$pasta"
+        mkdir -p "$pasta"
+        printf '\n=== Cenário %s | repetição %d/%d ===\n' "$nome" "$repeticao" "$REPETICOES"
+        python3 experimento.py --duracao "$DURACAO" --taxa-embb "$TAXA_EMBB" \
+            --diretorio-saida "$pasta" "$@" | tee "$pasta/execucao.log"
+
+        if [ "$repeticao" -eq 1 ]; then
+            cp "$pasta/latencias_urllc.csv" "$consolidado"
+        else
+            tail -n +2 "$pasta/latencias_urllc.csv" >> "$consolidado"
+        fi
+    done
 }
 
-executar_cenario isolado          --sem-embb
-executar_cenario sem_controle     --controle nenhum     --taxa-embb "$TAXA_EMBB"
-executar_cenario preventivo       --controle preventivo --taxa-embb "$TAXA_EMBB"
-executar_cenario reativo          --controle reativo    --taxa-embb "$TAXA_EMBB"
+cat > "$RESULTADOS/manifesto_experimento.txt" <<EOF
+data_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+duracao_segundos=$DURACAO
+taxa_embb_por_fluxo=$TAXA_EMBB
+repeticoes=$REPETICOES
+python=$(python3 --version 2>&1)
+kernel=$(uname -a)
+EOF
 
-echo ""
-echo "=============================================="
-echo "  Comparando os 4 cenários"
-echo "=============================================="
+executar_cenario isolado     --sem-embb --controle nenhum --qos-estatico
+executar_cenario sem_qos     --controle nenhum --no-qos-estatico
+executar_cenario qos_estatico --controle nenhum --qos-estatico
+executar_cenario reativo     --controle reativo --qos-estatico
+
+lista_csv() { local IFS=,; echo "$*"; }
+
 python3 comparar_cenarios.py \
-    --cenario "Isolado:$RESULTADOS/latencias_isolado.csv" \
-    --cenario "Sem controle:$RESULTADOS/latencias_sem_controle.csv" \
-    --cenario "Preventivo:$RESULTADOS/latencias_preventivo.csv" \
-    --cenario "Reativo:$RESULTADOS/latencias_reativo.csv" \
+    --cenario "Isolado:$(lista_csv "$EXECUCOES"/isolado/rep_*/latencias_urllc.csv)" \
+    --cenario "Sem QoS:$(lista_csv "$EXECUCOES"/sem_qos/rep_*/latencias_urllc.csv)" \
+    --cenario "QoS estático:$(lista_csv "$EXECUCOES"/qos_estatico/rep_*/latencias_urllc.csv)" \
+    --cenario "Closed loop:$(lista_csv "$EXECUCOES"/reativo/rep_*/latencias_urllc.csv)" \
     --saida "$RESULTADOS/comparacao"
 
-echo ""
-echo "Bateria de testes concluída. Veja os arquivos em $RESULTADOS/"
+echo "Bateria concluída. Evidências preservadas em $RESULTADOS"

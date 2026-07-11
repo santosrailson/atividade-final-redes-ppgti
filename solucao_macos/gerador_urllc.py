@@ -17,11 +17,12 @@ latência one-way comparando esse timestamp com o horário de chegada.
 
 import os
 import socket
-import struct
 import sys
 import time
 
-from scapy.all import conf, IP, TCP, Raw, StreamSocket
+from scapy.all import conf, Raw, StreamSocket
+
+from protocolo_urllc import TAMANHO_MENSAGEM, codificar_mensagem, decodificar_mensagem
 
 conf.verb = 0  # silencia os logs internos do Scapy
 
@@ -29,7 +30,7 @@ conf.verb = 0  # silencia os logs internos do Scapy
 # usuário/máquina -- assim o script roda igual dentro do container
 # Docker (ex.: /app) ou em qualquer outra pasta.
 DIRETORIO_PROJETO = os.path.dirname(os.path.abspath(__file__))
-DIRETORIO_RESULTADOS = os.path.join(DIRETORIO_PROJETO, "resultados")
+DIRETORIO_RESULTADOS = os.environ.get("RESULTADOS_DIR", os.path.join(DIRETORIO_PROJETO, "resultados"))
 os.makedirs(DIRETORIO_RESULTADOS, exist_ok=True)
 
 ARQUIVO_LATENCIAS_RTT = os.path.join(DIRETORIO_RESULTADOS, "latencias_urllc_rtt.csv")
@@ -69,20 +70,30 @@ def criar_conexao_scapy(endereco_destino, porta_destino):
     return StreamSocket(soquete, Raw)
 
 
-def enviar_pacote_urllc(conexao, pacote_base):
+def receber_exatamente(conexao, tamanho):
+    dados = b""
+    while len(dados) < tamanho:
+        pacote = conexao.recv()
+        if pacote is None or Raw not in pacote:
+            return None
+        dados += bytes(pacote[Raw].load)
+    return dados[:tamanho]
+
+
+def enviar_pacote_urllc(conexao, sequencia):
     """Envia um pacote uRLLC com o timestamp atual e aguarda o eco do
     monitor para calcular a latência (RTT medido no próprio gerador,
     usado apenas como referência cruzada da latência one-way do
     monitor)."""
     timestamp_envio = time.time()
-    payload = struct.pack("!d", timestamp_envio)
-
-    pacote_base[Raw].load = payload
-    conexao.send(pacote_base)
-
-    resposta = conexao.recv()
-    if resposta is None or Raw not in resposta:
+    conexao.send(Raw(load=codificar_mensagem(sequencia, timestamp_envio)))
+    dados = receber_exatamente(conexao, TAMANHO_MENSAGEM)
+    if dados is None:
         return None
+
+    sequencia_resposta, _ = decodificar_mensagem(dados)
+    if sequencia_resposta != sequencia:
+        raise ValueError("eco fora de sequência: esperado %d, recebido %d" % (sequencia, sequencia_resposta))
 
     timestamp_chegada = time.time()
     latencia_ms = (timestamp_chegada - timestamp_envio) * 1000
@@ -96,7 +107,7 @@ def executar_gerador(endereco_destino, porta_destino, intervalo_segundos, duraca
     conexao = None
     # ToS 0xB8 = DSCP EF (Expedited Forwarding), classe de prioridade
     # máxima usada tipicamente para tráfego sensível à latência.
-    pacote_base = IP(dst=endereco_destino, tos=0xB8) / TCP(dport=porta_destino) / Raw(load=b"\x00" * 8)
+    sequencia = 0
 
     tempo_inicio = time.time()
     while time.time() - tempo_inicio < duracao_segundos:
@@ -104,9 +115,10 @@ def executar_gerador(endereco_destino, porta_destino, intervalo_segundos, duraca
             if conexao is None:
                 conexao = criar_conexao_scapy(endereco_destino, porta_destino)
 
-            latencia = enviar_pacote_urllc(conexao, pacote_base)
+            latencia = enviar_pacote_urllc(conexao, sequencia)
             if latencia is not None:
                 latencias.append(latencia)
+                sequencia += 1
                 print("Latência uRLLC (RTT local): %.3f ms" % latencia, flush=True)
             else:
                 print("Falha ao medir latência, reconectando", flush=True)

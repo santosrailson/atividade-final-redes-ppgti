@@ -1,0 +1,33 @@
+Iniciando gerador uRLLC (Scapy/TCP) para 10.0.99.1:5000
+Erro de conexão: timed out, reconectando
+Falha ao medir latência, reconectando
+Erro de conexão: timed out, reconectando
+Erro de conexão: timed out, reconectando
+Erro de conexão: timed out, reconectando
+Falha ao medir latência, reconectando
+Erro de conexão: timed out, reconectando
+Erro de conexão: timed out, reconectando
+Erro de conexão: timed out, reconectando
+Erro de conexão: timed out, reconectando
+Latência uRLLC (RTT local): 1.108 ms
+Latência uRLLC (RTT local): 1.225 ms
+Latência uRLLC (RTT local): 1.579 ms
+Latência uRLLC (RTT local): 1.559 ms
+Latência uRLLC (RTT local): 1.715 ms
+Latência uRLLC (RTT local): 6.177 ms
+Latência uRLLC (RTT local): 1.291 ms
+Latência uRLLC (RTT local): 1.732 ms
+Latência uRLLC (RTT local): 1.926 ms
+Latência uRLLC (RTT local): 1.584 ms
+Latência uRLLC (RTT local): 1.803 ms
+Latência uRLLC (RTT local): 0.852 ms
+Latência uRLLC (RTT local): 1.239 ms
+Latência uRLLC (RTT local): 1.083 ms
+Latência uRLLC (RTT local): 0.885 ms
+Latência uRLLC (RTT local): 1.203 ms
+Latência uRLLC (RTT local): 0.978 ms
+Latência uRLLC (RTT local): 0.786 ms
+Latência uRLLC (RTT local): 0.856 ms
+Latência uRLLC (RTT local): 1.673 ms
+Latência uRLLC (RTT local): 1.078 ms
+Gerador uRLLC finalizado. 21 medições salvas em /app/resultados/execucoes/qos_estatico/rep_01/latencias_urllc_rtt.csv
