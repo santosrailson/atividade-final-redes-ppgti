@@ -1,4 +1,4 @@
-# Monitoramento Closed Loop de Princípios de Incêndio em Rede 5G com Tráfego uRLLC/eMBB
+# O Emprego de dispositivos em uma rede 5G com Closed Loop e Tráfego uRLLC/eMBB para a prevenção de incêndios no campus da UFPB
 
 Projeto final da disciplina **Redes de Computadores — PPGTI/IFPB**. Este
 protótipo avalia um sistema de monitoramento e controle em malha fechada para
