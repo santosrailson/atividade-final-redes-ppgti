@@ -1,4 +1,4 @@
-# O Emprego De Dispositivos Em Uma Rede 5G Com Closed Loop E Tráfego uRLLC/eMBB Para A Prevenção De Incêndios No Campus Da UFPB
+# O Emprego de Dispositivos em uma Rede 5G com Closed Loop e Tráfego uRLLC/eMBB para a Prevenção de Incêndios no Campus da UFPB
 
 Projeto final da disciplina **Redes de Computadores — PPGTI/IFPB**. Este
 protótipo avalia um sistema de monitoramento e controle em malha fechada para
