@@ -34,6 +34,13 @@ Os três enlaces do backbone têm 20 Mbit/s e 1 ms de atraso emulado. Três
 fluxos eMBB de 12 Mbit/s criam contenção intencional para permitir uma
 comparação mensurável entre as políticas.
 
+## Arquitetura visual
+
+![Arquitetura do experimento closed loop uRLLC/eMBB](solucao_macos/figura_arquitetura_closed_loop.png)
+
+*Figura 1 — Arquitetura do experimento closed loop uRLLC/eMBB em Mininet, com
+Open vSwitch, filas QoS e controlador reativo.*
+
 ## Estratégia de controle
 
 O tráfego TCP na porta 5000 é classificado como uRLLC e encaminhado pela fila
