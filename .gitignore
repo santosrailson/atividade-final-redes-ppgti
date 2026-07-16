@@ -26,3 +26,11 @@ dist/
 *bmv2*
 *.txt
 !p4/tabelas/*.txt
+
+# Artefatos de auditoria do experimento; logs e resumos versionados
+# permanecem disponíveis para reprodução dos resultados.
+resultados/sinal_controle_qos
+!resultados/**/*.txt
+!resultados/**/*.log
+!resultados/*.txt
+artigos/
