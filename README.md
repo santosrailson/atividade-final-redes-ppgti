@@ -115,13 +115,6 @@ dados brutos para auditoria e reprodução.
 --diretorio-saida CAMINHO
 ```
 
-## Guia acadêmico
-
-Abra [`guia_relatorio.html`](guia_relatorio.html) para orientações sobre
-Introdução, Metodologia, Proposta, Avaliação e Conclusões, incluindo
-estratégias, tabelas, figuras e ameaças à validade. O enunciado original está
-em [`PPGTI___RC___Projeto_Final.pdf`](PPGTI___RC___Projeto_Final.pdf).
-
 ## Estrutura principal
 
 ```text
