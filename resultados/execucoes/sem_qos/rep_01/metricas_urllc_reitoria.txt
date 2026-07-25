@@ -1,0 +1,5 @@
+identificador=reitoria
+tentativas=47
+sucessos=33
+falhas=14
+perdas=14

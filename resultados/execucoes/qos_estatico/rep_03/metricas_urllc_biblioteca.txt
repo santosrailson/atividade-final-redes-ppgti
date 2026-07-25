@@ -1,0 +1,5 @@
+identificador=biblioteca
+tentativas=33
+sucessos=24
+falhas=9
+perdas=9

@@ -1,0 +1,5 @@
+identificador=labs
+tentativas=35
+sucessos=25
+falhas=10
+perdas=10

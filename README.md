@@ -102,8 +102,21 @@ Cada execução cria uma pasta em `resultados/execucoes/<cenario>/rep_XX/` com:
 - logs do monitor, sensores e fluxos eMBB;
 - resumos estatísticos e gráficos.
 
-A bateria consolida as repetições em `resultados/comparacao_*`, mantendo os
-dados brutos para auditoria e reprodução.
+A bateria consolida as repetições em `resultados/comparacao_*`, incluindo a
+ECDF comparativa, mantendo os dados brutos para auditoria e reprodução.
+
+Após uma bateria completa, `analisar_evidencias.py` também gera:
+
+- `metricas_urllc.csv` e `metricas_urllc_tabela.txt`: tentativas, sucessos,
+  timeouts, violações acima de 5 ms e não conformidade efetiva;
+- `metricas_urllc.png`: perdas/timeouts e não conformidade por cenário;
+- `vazao_embb.csv` e `vazao_embb_tabela.txt`: vazão recebida e perda UDP
+  extraídas das linhas finais do iperf3;
+- `vazao_embb.png`: comparação da vazão eMBB com IC 95% entre repetições.
+- `manifesto_host.txt`: versões do macOS, Docker, hardware e data da bateria.
+
+As mensagens uRLLC que expiram o timeout são contabilizadas como tentativas
+não conformes, mesmo que não apareçam no CSV de latência recebida.
 
 ```text
 --duracao SEGUNDOS
@@ -131,6 +144,7 @@ dados brutos para auditoria e reprodução.
 ├── gerador_embb.py
 ├── monitor_controlador.py
 ├── analisar_resultados.py
+├── analisar_evidencias.py
 ├── comparar_cenarios.py
 ├── executar_bateria_testes.sh
 ├── tests/

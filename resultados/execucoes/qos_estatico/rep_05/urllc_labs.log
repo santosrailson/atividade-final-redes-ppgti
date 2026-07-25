@@ -1,0 +1,46 @@
+Iniciando gerador uRLLC (Scapy/TCP) para 10.0.99.1:5000
+Latência uRLLC (RTT local): 1123.547 ms
+Falha ao medir latência, reconectando
+Latência uRLLC (RTT local): 2107.415 ms
+Latência uRLLC (RTT local): 3675.948 ms
+Falha ao medir latência, reconectando
+Latência uRLLC (RTT local): 56.396 ms
+Latência uRLLC (RTT local): 315.742 ms
+Latência uRLLC (RTT local): 1803.871 ms
+Falha ao medir latência, reconectando
+Latência uRLLC (RTT local): 1096.454 ms
+Erro de conexão: timed out, reconectando
+Erro de conexão: timed out, reconectando
+Latência uRLLC (RTT local): 1187.722 ms
+Latência uRLLC (RTT local): 987.184 ms
+Latência uRLLC (RTT local): 57.238 ms
+Erro de conexão: timed out, reconectando
+Latência uRLLC (RTT local): 367.880 ms
+Falha ao medir latência, reconectando
+Erro de conexão: timed out, reconectando
+Falha ao medir latência, reconectando
+Latência uRLLC (RTT local): 1.880 ms
+Latência uRLLC (RTT local): 1.695 ms
+Latência uRLLC (RTT local): 1.928 ms
+Latência uRLLC (RTT local): 1.759 ms
+Latência uRLLC (RTT local): 1.082 ms
+Latência uRLLC (RTT local): 1.422 ms
+Latência uRLLC (RTT local): 1.584 ms
+Latência uRLLC (RTT local): 1.661 ms
+Latência uRLLC (RTT local): 1.088 ms
+Latência uRLLC (RTT local): 1.217 ms
+Latência uRLLC (RTT local): 0.985 ms
+Latência uRLLC (RTT local): 1.179 ms
+Latência uRLLC (RTT local): 1.419 ms
+Latência uRLLC (RTT local): 2.859 ms
+Latência uRLLC (RTT local): 1.264 ms
+Latência uRLLC (RTT local): 0.431 ms
+Latência uRLLC (RTT local): 1.293 ms
+Latência uRLLC (RTT local): 1.129 ms
+Latência uRLLC (RTT local): 2.269 ms
+Latência uRLLC (RTT local): 2.056 ms
+Latência uRLLC (RTT local): 2.088 ms
+Latência uRLLC (RTT local): 1.597 ms
+Latência uRLLC (RTT local): 1.708 ms
+Latência uRLLC (RTT local): 1.587 ms
+Gerador uRLLC finalizado. 35 medições salvas; tentativas=44, falhas=9

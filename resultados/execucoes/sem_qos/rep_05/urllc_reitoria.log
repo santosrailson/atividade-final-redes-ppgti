@@ -1,0 +1,58 @@
+Iniciando gerador uRLLC (Scapy/TCP) para 10.0.99.1:5000
+Erro de conexão: timed out, reconectando
+Latência uRLLC (RTT local): 1170.097 ms
+Falha ao medir latência, reconectando
+Erro de conexão: timed out, reconectando
+Latência uRLLC (RTT local): 594.625 ms
+Latência uRLLC (RTT local): 587.888 ms
+Latência uRLLC (RTT local): 61.157 ms
+Latência uRLLC (RTT local): 61.154 ms
+Latência uRLLC (RTT local): 61.120 ms
+Falha ao medir latência, reconectando
+Latência uRLLC (RTT local): 1162.654 ms
+Latência uRLLC (RTT local): 1115.639 ms
+Latência uRLLC (RTT local): 1116.072 ms
+Latência uRLLC (RTT local): 587.759 ms
+Falha ao medir latência, reconectando
+Erro de conexão: timed out, reconectando
+Falha ao medir latência, reconectando
+Latência uRLLC (RTT local): 61.429 ms
+Latência uRLLC (RTT local): 61.244 ms
+Latência uRLLC (RTT local): 1148.210 ms
+Latência uRLLC (RTT local): 60.624 ms
+Latência uRLLC (RTT local): 593.661 ms
+Latência uRLLC (RTT local): 588.542 ms
+Falha ao medir latência, reconectando
+Falha ao medir latência, reconectando
+Latência uRLLC (RTT local): 1170.827 ms
+Latência uRLLC (RTT local): 323.113 ms
+Latência uRLLC (RTT local): 326.650 ms
+Latência uRLLC (RTT local): 1161.188 ms
+Latência uRLLC (RTT local): 322.948 ms
+Latência uRLLC (RTT local): 884.468 ms
+Latência uRLLC (RTT local): 323.789 ms
+Latência uRLLC (RTT local): 326.047 ms
+Latência uRLLC (RTT local): 60.417 ms
+Falha ao medir latência, reconectando
+Latência uRLLC (RTT local): 2.756 ms
+Latência uRLLC (RTT local): 2.891 ms
+Latência uRLLC (RTT local): 3.061 ms
+Latência uRLLC (RTT local): 3.094 ms
+Latência uRLLC (RTT local): 3.039 ms
+Latência uRLLC (RTT local): 3.129 ms
+Latência uRLLC (RTT local): 2.669 ms
+Latência uRLLC (RTT local): 2.877 ms
+Latência uRLLC (RTT local): 2.856 ms
+Latência uRLLC (RTT local): 2.968 ms
+Latência uRLLC (RTT local): 3.395 ms
+Latência uRLLC (RTT local): 3.512 ms
+Latência uRLLC (RTT local): 3.606 ms
+Latência uRLLC (RTT local): 3.343 ms
+Latência uRLLC (RTT local): 3.175 ms
+Latência uRLLC (RTT local): 2.894 ms
+Latência uRLLC (RTT local): 3.379 ms
+Latência uRLLC (RTT local): 3.527 ms
+Latência uRLLC (RTT local): 3.436 ms
+Latência uRLLC (RTT local): 3.692 ms
+Latência uRLLC (RTT local): 3.405 ms
+Gerador uRLLC finalizado. 46 medições salvas; tentativas=56, falhas=10

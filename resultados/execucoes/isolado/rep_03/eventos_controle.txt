@@ -1,0 +1,3 @@
+1784976115.663	sem_embb
+1784976115.672	inicio_monitoramento
+1784976175.781	fim_monitoramento

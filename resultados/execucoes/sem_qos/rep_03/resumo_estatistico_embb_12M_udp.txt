@@ -1,0 +1,17 @@
+=== Resumo estatístico do experimento: embb_12M_udp ===
+
+Amostras coletadas: 160
+Latência média: 452.046 ms
+Latência mediana (p50): 118.957 ms
+Desvio padrão: 1246.252 ms
+Mínimo: 1.338 ms | Máximo: 11849.402 ms
+Intervalo de confiança 95% para a média: [257.460, 646.632] ms
+
+Percentis:
+  p50: 118.957 ms
+  p75: 469.574 ms
+  p90: 1163.712 ms
+  p95: 1627.011 ms
+  p99: 5492.663 ms
+
+Violações do limiar de 5.0 ms: 89 de 160 amostras (55.62%)

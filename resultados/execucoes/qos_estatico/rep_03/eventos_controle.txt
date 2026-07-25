@@ -1,0 +1,2 @@
+1784976856.214	inicio_monitoramento
+1784976916.305	fim_monitoramento

@@ -1,0 +1,4 @@
+1784977380.026	inicio_monitoramento
+1784977381.443	controle_ativar
+1784977437.995	controle_desativar
+1784977440.201	fim_monitoramento

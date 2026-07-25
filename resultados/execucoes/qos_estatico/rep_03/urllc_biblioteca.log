@@ -1,0 +1,35 @@
+Iniciando gerador uRLLC (Scapy/TCP) para 10.0.99.1:5000
+Latência uRLLC (RTT local): 1152.106 ms
+Erro de conexão: timed out, reconectando
+Erro de conexão: timed out, reconectando
+Erro de conexão: timed out, reconectando
+Falha ao medir latência, reconectando
+Erro de conexão: timed out, reconectando
+Latência uRLLC (RTT local): 584.780 ms
+Latência uRLLC (RTT local): 843.783 ms
+Erro de conexão: timed out, reconectando
+Erro de conexão: timed out, reconectando
+Erro de conexão: timed out, reconectando
+Erro de conexão: timed out, reconectando
+Latência uRLLC (RTT local): 1.290 ms
+Latência uRLLC (RTT local): 2.016 ms
+Latência uRLLC (RTT local): 2.155 ms
+Latência uRLLC (RTT local): 2.948 ms
+Latência uRLLC (RTT local): 2.080 ms
+Latência uRLLC (RTT local): 1.568 ms
+Latência uRLLC (RTT local): 1.743 ms
+Latência uRLLC (RTT local): 2.318 ms
+Latência uRLLC (RTT local): 1.406 ms
+Latência uRLLC (RTT local): 1.448 ms
+Latência uRLLC (RTT local): 2.064 ms
+Latência uRLLC (RTT local): 1.780 ms
+Latência uRLLC (RTT local): 1.378 ms
+Latência uRLLC (RTT local): 3.388 ms
+Latência uRLLC (RTT local): 1.584 ms
+Latência uRLLC (RTT local): 1.860 ms
+Latência uRLLC (RTT local): 1.360 ms
+Latência uRLLC (RTT local): 1.475 ms
+Latência uRLLC (RTT local): 1.487 ms
+Latência uRLLC (RTT local): 2.047 ms
+Latência uRLLC (RTT local): 1.616 ms
+Gerador uRLLC finalizado. 24 medições salvas; tentativas=33, falhas=9

@@ -1,17 +1,17 @@
 === Resumo estatístico do experimento: embb_12M_udp_reativo ===
 
-Amostras coletadas: 70
-Latência média: 17.876 ms
-Latência mediana (p50): 1.044 ms
-Desvio padrão: 98.290 ms
-Mínimo: 0.233 ms | Máximo: 587.307 ms
-Intervalo de confiança 95% para a média: [-5.561, 41.312] ms
+Amostras coletadas: 76
+Latência média: 2.402 ms
+Latência mediana (p50): 0.855 ms
+Desvio padrão: 8.883 ms
+Mínimo: 0.220 ms | Máximo: 55.966 ms
+Intervalo de confiança 95% para a média: [0.372, 4.432] ms
 
 Percentis:
-  p50: 1.044 ms
-  p75: 1.567 ms
-  p90: 2.103 ms
-  p95: 2.476 ms
-  p99: 586.722 ms
+  p50: 0.855 ms
+  p75: 1.309 ms
+  p90: 1.745 ms
+  p95: 2.176 ms
+  p99: 55.961 ms
 
-Violações do limiar de 5.0 ms: 2 de 70 amostras (2.86%)
+Violações do limiar de 5.0 ms: 2 de 76 amostras (2.63%)

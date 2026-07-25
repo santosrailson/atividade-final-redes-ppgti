@@ -1,17 +1,17 @@
 === Resumo estatístico do experimento: sem_embb ===
 
-Amostras coletadas: 1710
-Latência média: 1.242 ms
-Latência mediana (p50): 1.183 ms
-Desvio padrão: 0.487 ms
-Mínimo: 0.170 ms | Máximo: 4.613 ms
-Intervalo de confiança 95% para a média: [1.219, 1.265] ms
+Amostras coletadas: 1773
+Latência média: 0.450 ms
+Latência mediana (p50): 0.383 ms
+Desvio padrão: 0.212 ms
+Mínimo: 0.168 ms | Máximo: 1.936 ms
+Intervalo de confiança 95% para a média: [0.441, 0.460] ms
 
 Percentis:
-  p50: 1.183 ms
-  p75: 1.482 ms
-  p90: 1.817 ms
-  p95: 2.123 ms
-  p99: 2.653 ms
+  p50: 0.383 ms
+  p75: 0.516 ms
+  p90: 0.720 ms
+  p95: 0.875 ms
+  p99: 1.216 ms
 
-Violações do limiar de 5.0 ms: 0 de 1710 amostras (0.00%)
+Violações do limiar de 5.0 ms: 0 de 1773 amostras (0.00%)

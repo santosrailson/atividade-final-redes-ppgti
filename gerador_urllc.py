@@ -36,6 +36,20 @@ os.makedirs(DIRETORIO_RESULTADOS, exist_ok=True)
 ARQUIVO_LATENCIAS_RTT = os.path.join(DIRETORIO_RESULTADOS, "latencias_urllc_rtt.csv")
 
 
+def caminho_metricas(identificador):
+    """Retorna um arquivo de métricas exclusivo para cada sensor.
+
+    Os três geradores uRLLC executam simultaneamente. Um arquivo por sensor
+    evita que as estatísticas de tentativas e timeouts sejam sobrescritas por
+    outro processo ao final da execução.
+    """
+    seguro = "".join(
+        caractere if caractere.isalnum() or caractere in "-_" else "_"
+        for caractere in str(identificador)
+    ) or "sensor"
+    return os.path.join(DIRETORIO_RESULTADOS, "metricas_urllc_%s.txt" % seguro)
+
+
 def configurar_prioridade():
     """Tenta elevar a prioridade do processo/agendamento para reduzir
     jitter causado pelo escalonador do SO. Falha silenciosamente se o
@@ -73,7 +87,13 @@ def criar_conexao_scapy(endereco_destino, porta_destino):
 def receber_exatamente(conexao, tamanho):
     dados = b""
     while len(dados) < tamanho:
-        pacote = conexao.recv()
+        try:
+            pacote = conexao.recv()
+        except EOFError:
+            # O peer encerrou a conexão durante uma contenção severa.
+            # Transformar EOF em falha contabilizável evita encerrar o
+            # gerador sem gravar suas métricas da repetição.
+            return None
         if pacote is None or Raw not in pacote:
             return None
         dados += bytes(pacote[Raw].load)
@@ -100,10 +120,19 @@ def enviar_pacote_urllc(conexao, sequencia):
     return latencia_ms
 
 
-def executar_gerador(endereco_destino, porta_destino, intervalo_segundos, duracao_segundos):
+def executar_gerador(
+    endereco_destino,
+    porta_destino,
+    intervalo_segundos,
+    duracao_segundos,
+    identificador="sensor",
+):
     configurar_prioridade()
     print("Iniciando gerador uRLLC (Scapy/TCP) para %s:%d" % (endereco_destino, porta_destino), flush=True)
     latencias = []
+    tentativas = 0
+    sucessos = 0
+    falhas = 0
     conexao = None
     # ToS 0xB8 = DSCP EF (Expedited Forwarding), classe de prioridade
     # máxima usada tipicamente para tráfego sensível à latência.
@@ -111,6 +140,7 @@ def executar_gerador(endereco_destino, porta_destino, intervalo_segundos, duraca
 
     tempo_inicio = time.time()
     while time.time() - tempo_inicio < duracao_segundos:
+        tentativas += 1
         try:
             if conexao is None:
                 conexao = criar_conexao_scapy(endereco_destino, porta_destino)
@@ -118,13 +148,16 @@ def executar_gerador(endereco_destino, porta_destino, intervalo_segundos, duraca
             latencia = enviar_pacote_urllc(conexao, sequencia)
             if latencia is not None:
                 latencias.append(latencia)
+                sucessos += 1
                 sequencia += 1
                 print("Latência uRLLC (RTT local): %.3f ms" % latencia, flush=True)
             else:
+                falhas += 1
                 print("Falha ao medir latência, reconectando", flush=True)
                 conexao.close()
                 conexao = None
         except (socket.timeout, socket.error, BrokenPipeError, OSError) as erro:
+            falhas += 1
             print("Erro de conexão: %s, reconectando" % erro, flush=True)
             if conexao:
                 try:
@@ -146,7 +179,18 @@ def executar_gerador(endereco_destino, porta_destino, intervalo_segundos, duraca
         for valor in latencias:
             arquivo.write("%.3f\n" % valor)
 
-    print("Gerador uRLLC finalizado. %d medições salvas em %s" % (len(latencias), ARQUIVO_LATENCIAS_RTT), flush=True)
+    with open(caminho_metricas(identificador), "w") as arquivo:
+        arquivo.write("identificador=%s\n" % identificador)
+        arquivo.write("tentativas=%d\n" % tentativas)
+        arquivo.write("sucessos=%d\n" % sucessos)
+        arquivo.write("falhas=%d\n" % falhas)
+        arquivo.write("perdas=%d\n" % (tentativas - sucessos))
+
+    print(
+        "Gerador uRLLC finalizado. %d medições salvas; tentativas=%d, falhas=%d"
+        % (len(latencias), tentativas, falhas),
+        flush=True,
+    )
 
 
 if __name__ == "__main__":
@@ -154,4 +198,5 @@ if __name__ == "__main__":
     porta = int(sys.argv[2]) if len(sys.argv) > 2 else 5000
     intervalo = float(sys.argv[3]) if len(sys.argv) > 3 else 0.5
     duracao = float(sys.argv[4]) if len(sys.argv) > 4 else 30.0
-    executar_gerador(endereco, porta, intervalo, duracao)
+    identificador = sys.argv[5] if len(sys.argv) > 5 else "sensor"
+    executar_gerador(endereco, porta, intervalo, duracao, identificador)

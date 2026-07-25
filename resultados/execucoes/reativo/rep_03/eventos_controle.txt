@@ -1,0 +1,4 @@
+1784977230.348	inicio_monitoramento
+1784977234.196	controle_ativar
+1784977288.019	controle_desativar
+1784977290.406	fim_monitoramento

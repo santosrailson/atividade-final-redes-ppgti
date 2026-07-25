@@ -1,0 +1,7 @@
+Vazão eMBB recebida (extraída da linha final receiver do iperf3)
+
+Cenário               reps        sites     Média Mbit/s      DesvPad Perda média %         IC95 vazão
+------------------------------------------------------------------------------------------------------------
+Sem QoS                  5           15            6.469        0.004        46.00 [  6.464,   6.473]
+QoS estático             5           15            5.766        0.200        51.87 [  5.518,   6.014]
+Closed loop              5           15            0.932        0.146        92.27 [  0.750,   1.114]

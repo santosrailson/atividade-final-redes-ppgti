@@ -1,0 +1,12 @@
+# Manifesto do host macOS usado pela bateria de 25/07/2026.
+# Complementa resultados/manifesto_experimento.txt, que descreve o container.
+data_bateria_utc=2026-07-25T10:39:29Z
+macos_product=macOS
+macos_version=26.5.2
+macos_build=25F84
+hardware_model=Mac16,10
+cpus_logicos=10
+memoria_bytes=17179869184
+docker_version=29.6.2
+docker_compose_version=5.3.1
+imagem=urllc-macos-lab

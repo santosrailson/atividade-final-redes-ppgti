@@ -242,7 +242,8 @@ def executar_experimento(duracao_segundos, taxa_embb, tipo_embb, controle, sem_e
         arquivo_log = os.path.join(DIRETORIO_RESULTADOS, "urllc_%s.log" % site["nome"])
         processo = h_sensor.popen(
             [CAMINHO_PYTHON, os.path.join(DIRETORIO_PROJETO, "gerador_urllc.py"),
-             IP_CENTRAL_URLLC, str(PORTA_URLLC), str(intervalo_urllc), str(duracao_segundos)],
+             IP_CENTRAL_URLLC, str(PORTA_URLLC), str(intervalo_urllc),
+             str(duracao_segundos), site["nome"].lower()],
             stdout=open(arquivo_log, "w"),
             stderr=subprocess.STDOUT
         )

@@ -1,0 +1,9 @@
+Métricas de conformidade uRLLC (limiar: 5 ms)
+A não conformidade inclui timeouts/perdas e latências recebidas acima de 5 ms.
+
+Cenário               reps  Tentativas     Falhas    Violações  Não conformes     Perdas %    Não conformes %   IC95 não conf. %
+-------------------------------------------------------------------------------------------------------------------------------------------
+Isolado                  5        8838          0            7              7         0.00               0.08 [   0.00,    0.20]
+Sem QoS                  5        1124        148          364            512        13.17              45.55 [  37.39,   53.47]
+QoS estático             5         887        129          318            447        14.54              50.39 [  43.98,   55.38]
+Closed loop              5         533        158            9            167        29.64              31.33 [  30.29,   32.38]

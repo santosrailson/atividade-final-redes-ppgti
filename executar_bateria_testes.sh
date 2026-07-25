@@ -57,4 +57,6 @@ python3 comparar_cenarios.py \
     --cenario "Closed loop:$(lista_csv "$EXECUCOES"/reativo/rep_*/latencias_urllc.csv)" \
     --saida "$RESULTADOS/comparacao"
 
+python3 analisar_evidencias.py --resultados "$RESULTADOS"
+
 echo "Bateria concluída. Evidências preservadas em $RESULTADOS"

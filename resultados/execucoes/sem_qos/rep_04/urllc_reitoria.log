@@ -1,0 +1,53 @@
+Iniciando gerador uRLLC (Scapy/TCP) para 10.0.99.1:5000
+Falha ao medir latência, reconectando
+Erro de conexão: timed out, reconectando
+Erro de conexão: timed out, reconectando
+Erro de conexão: timed out, reconectando
+Erro de conexão: timed out, reconectando
+Erro de conexão: timed out, reconectando
+Falha ao medir latência, reconectando
+Latência uRLLC (RTT local): 61.312 ms
+Latência uRLLC (RTT local): 61.200 ms
+Latência uRLLC (RTT local): 325.935 ms
+Latência uRLLC (RTT local): 324.371 ms
+Falha ao medir latência, reconectando
+Latência uRLLC (RTT local): 61.106 ms
+Latência uRLLC (RTT local): 61.581 ms
+Falha ao medir latência, reconectando
+Erro de conexão: timed out, reconectando
+Erro de conexão: timed out, reconectando
+Erro de conexão: timed out, reconectando
+Falha ao medir latência, reconectando
+Latência uRLLC (RTT local): 61.156 ms
+Latência uRLLC (RTT local): 327.146 ms
+Erro de conexão: [Errno 104] Connection reset by peer, reconectando
+Latência uRLLC (RTT local): 1101.493 ms
+Latência uRLLC (RTT local): 2.650 ms
+Latência uRLLC (RTT local): 2.857 ms
+Latência uRLLC (RTT local): 3.032 ms
+Latência uRLLC (RTT local): 3.134 ms
+Latência uRLLC (RTT local): 3.026 ms
+Latência uRLLC (RTT local): 3.033 ms
+Latência uRLLC (RTT local): 3.057 ms
+Latência uRLLC (RTT local): 3.041 ms
+Latência uRLLC (RTT local): 3.102 ms
+Latência uRLLC (RTT local): 2.920 ms
+Latência uRLLC (RTT local): 3.008 ms
+Latência uRLLC (RTT local): 2.879 ms
+Latência uRLLC (RTT local): 2.959 ms
+Latência uRLLC (RTT local): 3.133 ms
+Latência uRLLC (RTT local): 2.898 ms
+Latência uRLLC (RTT local): 2.722 ms
+Latência uRLLC (RTT local): 3.068 ms
+Latência uRLLC (RTT local): 2.882 ms
+Latência uRLLC (RTT local): 3.115 ms
+Latência uRLLC (RTT local): 3.065 ms
+Latência uRLLC (RTT local): 2.916 ms
+Latência uRLLC (RTT local): 2.965 ms
+Latência uRLLC (RTT local): 2.624 ms
+Latência uRLLC (RTT local): 3.067 ms
+Latência uRLLC (RTT local): 3.020 ms
+Latência uRLLC (RTT local): 2.903 ms
+Latência uRLLC (RTT local): 2.923 ms
+Latência uRLLC (RTT local): 3.115 ms
+Gerador uRLLC finalizado. 37 medições salvas; tentativas=51, falhas=14
