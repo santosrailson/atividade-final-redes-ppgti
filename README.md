@@ -57,17 +57,77 @@ tráfego de vídeo.
 Use no mínimo cinco repetições independentes por cenário e registre versão do
 Docker, hardware, duração, taxa e horário da execução.
 
-## Pré-requisitos e execução rápida
+## Pré-requisitos
 
-- macOS com Docker Desktop e Docker Compose v2;
+- macOS com Docker Desktop e Docker Compose;
 - pelo menos 4 CPUs e 6 GB de memória disponíveis para o Docker;
-- nenhuma instalação local de Mininet é necessária.
+- nenhuma instalação local de Mininet, Open vSwitch ou `iperf3` é necessária;
+- acesso à Internet na primeira construção da imagem, para baixar a imagem
+  `ubuntu:22.04` e os pacotes do laboratório.
+
+O projeto não possui uma suíte `unittest` separada. A validação inicial é feita
+pela compilação dos scripts Python, pela exibição da ajuda do experimento e,
+opcionalmente, por uma execução curta.
+
+## Ambiente de referência
+
+A bateria usada como referência para o artigo foi registrada em **25/07/2026**.
+Os arquivos `resultados/manifesto_host.txt` e
+`resultados/manifesto_experimento.txt` preservam parte desses metadados.
+
+### Host macOS
+
+| Item | Versão ou configuração |
+|---|---|
+| Computador | Mac mini (Mac16,10) |
+| Processador | Apple M4, 10 núcleos (4 de desempenho e 6 de eficiência) |
+| Memória física | 16 GB |
+| Arquitetura | arm64 |
+| Sistema operacional | macOS 26.5.2, build 25F84 |
+| Docker Desktop | 4.83.0 |
+| Docker Engine | 29.6.2 |
+| Docker Compose | v5.3.1 |
+| Recursos informados pelo Docker | 10 CPUs e aproximadamente 7,75 GiB de memória |
+
+### Container do laboratório
+
+O Mininet não é executado diretamente no kernel Darwin. Ele roda em um
+container Linux privilegiado, dentro da VM Linux do Docker Desktop, usando o
+datapath `netdev` do Open vSwitch.
+
+| Componente | Versão ou configuração |
+|---|---|
+| Sistema operacional | Ubuntu 22.04.5 LTS |
+| Kernel da VM | LinuxKit 6.12.76-linuxkit |
+| Arquitetura | aarch64 |
+| Python | 3.10.12 |
+| Mininet | 2.3.0 |
+| Open vSwitch | 2.17.9 |
+| `iperf3` | 3.9 (cJSON 1.7.13) |
+| Scapy | 2.7.0 |
+| NumPy | 2.2.6 |
+| SciPy | 1.15.3 |
+| Matplotlib | 3.10.7 |
+
+Para registrar as versões do ambiente antes de uma nova execução, use:
 
 ```bash
-docker compose build
-docker compose run --rm urllc-lab python3 -m unittest discover -s tests -v
-docker compose run --rm urllc-lab python3 experimento.py \
-  --duracao 60 --taxa-embb 12M --controle reativo
+sw_vers
+system_profiler SPHardwareDataType \
+  | grep -E 'Model Name|Model Identifier|Chip|Total Number of Cores|Memory'
+docker compose version
+docker version
+docker info --format 'Server={{.ServerVersion}} OS={{.OperatingSystem}} Arch={{.Architecture}} CPUs={{.NCPU}} Memory={{.MemTotal}}'
+docker compose run --rm --entrypoint bash urllc-lab -lc '
+  . /etc/os-release
+  printf "%s\\n" "$PRETTY_NAME"
+  uname -r
+  python3 --version
+  mn --version
+  ovs-vswitchd --version | head -n 1
+  iperf3 --version | head -n 1
+  python3 -c "import matplotlib, numpy, scipy, scapy; print(\"Scapy\", scapy.__version__); print(\"NumPy\", numpy.__version__); print(\"SciPy\", scipy.__version__); print(\"Matplotlib\", matplotlib.__version__)"
+'
 ```
 
 O Mininet depende de recursos do kernel Linux. No macOS, a solução roda em um
@@ -77,21 +137,93 @@ OVS/tc; não execute código não confiável nele.
 
 ## Bateria experimental
 
-O comando recomendado executa cinco repetições de 60 segundos por cenário:
+### Verificação rápida
+
+Construa a imagem e valide os scripts sem iniciar uma bateria completa:
+
+```bash
+docker compose build
+docker compose run --rm --entrypoint bash urllc-lab -lc \
+  'python3 -m compileall -q /app/*.py && python3 experimento.py --help'
+```
+
+Para um teste funcional curto, execute uma repetição de 10 segundos em cada
+cenário:
+
+```bash
+docker compose run --rm \
+  -e REPETICOES=1 -e DURACAO=10 -e TAXA_EMBB=12M \
+  urllc-lab ./executar_bateria_testes.sh
+```
+
+### Teste individual de um cenário
+
+Cada comando abaixo executa uma repetição de 60 segundos e grava os arquivos
+no diretório montado `resultados/` do host. Use `--duracao 10` para um teste
+funcional mais rápido.
+
+```bash
+# 1. Isolado: somente uRLLC, sem tráfego eMBB.
+docker compose run --rm urllc-lab python3 experimento.py \
+  --duracao 60 --taxa-embb 12M --sem-embb --controle nenhum \
+  --qos-estatico --diretorio-saida /app/resultados/manual/isolado
+
+# 2. Sem QoS: uRLLC e eMBB concorrentes, sem fila prioritária.
+docker compose run --rm urllc-lab python3 experimento.py \
+  --duracao 60 --taxa-embb 12M --controle nenhum --no-qos-estatico \
+  --diretorio-saida /app/resultados/manual/sem_qos
+
+# 3. QoS estático: fila prioritária fixa, sem closed loop.
+docker compose run --rm urllc-lab python3 experimento.py \
+  --duracao 60 --taxa-embb 12M --controle nenhum --qos-estatico \
+  --diretorio-saida /app/resultados/manual/qos_estatico
+
+# 4. Closed loop reativo: QoS estático mais ajuste automático do eMBB.
+docker compose run --rm urllc-lab python3 experimento.py \
+  --duracao 60 --taxa-embb 12M --controle reativo --qos-estatico \
+  --diretorio-saida /app/resultados/manual/reativo
+```
+
+Os parâmetros disponíveis em `experimento.py` são:
+
+```text
+--duracao SEGUNDOS
+--taxa-embb TAXA              # exemplo: 12M por fluxo
+--tipo-embb udp|tcp
+--controle nenhum|reativo
+--sem-embb
+--intervalo-urllc SEGUNDOS    # padrão: 0.1
+--qos-estatico / --no-qos-estatico
+--diretorio-saida CAMINHO
+```
+
+### Bateria completa
+
+O comando recomendado executa cinco repetições de 60 segundos por cenário,
+totalizando 20 execuções independentes:
 
 ```bash
 docker compose run --rm \
   -e REPETICOES=5 -e DURACAO=60 -e TAXA_EMBB=12M \
-  urllc-lab ./executar_bateria_testes.sh
+  urllc-lab ./executar_bateria_testes.sh \
+  2>&1 | tee resultados/bateria_$(date +%Y%m%d_%H%M%S).log
 ```
 
-Para uma verificação curta com uma repetição por cenário:
+O script executa automaticamente os cenários `isolado`, `sem_qos`,
+`qos_estatico` e `reativo`, chama `comparar_cenarios.py` e, ao final,
+executa `analisar_evidencias.py`.
+
+Também é possível alterar os parâmetros sem editar os scripts:
 
 ```bash
 docker compose run --rm \
-  -e REPETICOES=1 -e DURACAO=60 -e TAXA_EMBB=12M \
+  -e REPETICOES=5 -e DURACAO=60 -e TAXA_EMBB=8M \
   urllc-lab ./executar_bateria_testes.sh
 ```
+
+O parâmetro `TAXA_EMBB` representa a taxa de **cada** um dos três fluxos
+eMBB. A topologia mantém 20 Mbit/s nos enlaces do backbone; portanto, três
+fluxos de 12 Mbit/s geram contenção intencional.
 
 ## Saídas e parâmetros
 
@@ -105,7 +237,7 @@ Cada execução cria uma pasta em `resultados/execucoes/<cenario>/rep_XX/` com:
 A bateria consolida as repetições em `resultados/comparacao_*`, incluindo a
 ECDF comparativa, mantendo os dados brutos para auditoria e reprodução.
 
-Após uma bateria completa, `analisar_evidencias.py` também gera:
+Ao final da bateria, os scripts de consolidação geram:
 
 - `metricas_urllc.csv` e `metricas_urllc_tabela.txt`: tentativas, sucessos,
   timeouts, violações acima de 5 ms e não conformidade efetiva;
@@ -113,20 +245,16 @@ Após uma bateria completa, `analisar_evidencias.py` também gera:
 - `vazao_embb.csv` e `vazao_embb_tabela.txt`: vazão recebida e perda UDP
   extraídas das linhas finais do iperf3;
 - `vazao_embb.png`: comparação da vazão eMBB com IC 95% entre repetições.
-- `manifesto_host.txt`: versões do macOS, Docker, hardware e data da bateria.
+- `manifesto_experimento.txt`: duração, taxa e repetições, além da versão do
+  Python e do kernel LinuxKit observado no container. Esse arquivo é escrito
+  por `executar_bateria_testes.sh` no início da bateria;
+
+O `manifesto_host.txt` é o registro do macOS, Docker, hardware e data da
+bateria. Ele deve ser atualizado no host quando uma nova máquina ou
+configuração do Docker for utilizada.
 
 As mensagens uRLLC que expiram o timeout são contabilizadas como tentativas
 não conformes, mesmo que não apareçam no CSV de latência recebida.
-
-```text
---duracao SEGUNDOS
---taxa-embb 12M
---tipo-embb udp|tcp
---controle nenhum|reativo
---qos-estatico / --no-qos-estatico
---sem-embb
---diretorio-saida CAMINHO
-```
 
 ## Estrutura principal
 
